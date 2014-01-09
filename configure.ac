@@ -4,7 +4,7 @@
 AC_PREREQ([2.65])
 AC_INIT([detect-marker], [0.0.0], [hbenamor@cc.gatech.edu])
 AM_INIT_AUTOMAKE([-Wall])
-AC_CONFIG_SRCDIR([detectMarker.cpp])
+AC_CONFIG_SRCDIR([src/detectMarker.cpp])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -44,9 +44,11 @@ AC_CHECK_HEADERS([GL/glut.h])
 # pkg-config does exactly what it was meant to do
 PKG_CHECK_MODULES([GLIB], [glib-2.0])
 PKG_CHECK_MODULES([GSTREAMER], [gstreamer-0.10])
+PKG_CHECK_MODULES([OPENCV], [opencv])
 
-CFLAGS="$CFLAGS $GLIB_CFLAGS $GSTREAMER_CFLAGS"
-LDFLAGS="$LDFLAGS $GLIB_LIBS $GSTREAMER_LIBS"
+CFLAGS="$CFLAGS $GLIB_CFLAGS $GSTREAMER_CFLAGS $OPENCV_CFLAGS"
+CXXFLAGS="$CXXFLAGS $GLIB_CFLAGS $GSTREAMER_CFLAGS $OPENCV_CFLAGS"
+LDFLAGS="$LDFLAGS $GLIB_LIBS $GSTREAMER_LIBS $OPENCV_LIBS"
 
 dnl If we found the flag checking macro, check some flags
 dnl m4_ifdef([APPEND_FLAG],
@@ -67,4 +69,6 @@ AC_MSG_NOTICE([])
 AC_MSG_NOTICE([CONFIGURATION SUMMARY])
 AC_MSG_NOTICE([=====================])
 AC_MSG_NOTICE([PREFIX:          $prefix])
-AC_MSG_NOTICE([GST LD:          $GSTREAMER_LIBS])
+AC_MSG_NOTICE([CFLAGS:          $CFLAGS])
+AC_MSG_NOTICE([CXXFLAGS:        $CXXFLAGS])
+AC_MSG_NOTICE([LDFLAGS:         $LDFLAGS])
