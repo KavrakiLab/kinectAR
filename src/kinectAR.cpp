@@ -414,9 +414,9 @@ void KinectAR::sendMsg(size_t n)
 	// loop over all markers
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
-		sns_wt_tf *wt_tf = &msg->wt_tf[i];
-
 		int id = (*(marker_detector.markers))[i].GetId();
+		sns_wt_tf *wt_tf = &msg->wt_tf[id];
+
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
 
 		// get the quaternion orientation
