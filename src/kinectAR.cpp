@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
 #include "kinectAR.h"
 
 static inline size_t msg_size( size_t n ) {
@@ -12,7 +13,7 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR() 
+KinectAR::KinectAR()
 {
 	volatile int die = 0;
 
@@ -36,7 +37,7 @@ KinectAR::KinectAR()
 	got_rgb = 0;
 	got_depth = 0;
 	depth_on = 1;
-	
+
 	depth_mid = (uint8_t*)malloc(640*480*3);
 	depth_front = (uint8_t*)malloc(640*480*3);
 
@@ -65,7 +66,7 @@ KinectAR::KinectAR()
 		freenect_shutdown(f_ctx);
 		exit(0);
 	}
-	
+
 	marker_size = 3.75;
 	image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
 }
@@ -75,37 +76,37 @@ void KinectAR::detectMarkers()
 	static int a = 0;
 	std::cout << "Frame #: " << a << std::endl;
 	a++;
-	
+
 	image->imageData = (char *)rgb_mid;
-	
-	if (init) 
+
+	if (init)
 	{
 		init = false;
 		//cout<<"Loading calibration: "<<calibrationFilename.str();
-		if (false) 
+		if (false)
 		{
-			std::cout<<" [Ok]"<< std::endl;	
-		} 
-		else 
+			std::cout<<" [Ok]"<< std::endl;
+		}
+		else
 		{
 			cam.SetRes(image->width, image->height);
 			std::cout<<" [Fail]"<< std::endl;
 		}
-		
+
 		double p[16];
 		cam.GetOpenglProjectionMatrix(p,image->width,image->height);
 		GlutViewer::SetGlProjectionMatrix(p);
-		for (int i=0; i<32; i++) 
+		for (int i=0; i<32; i++)
 		{
 			d[i].SetScale(marker_size);
 		}
 	}
-	
+
 	marker_detector.SetMarkerSize(marker_size); // for marker ids larger than 255, set the content resolution accordingly
 	marker_detector.Detect(image, &cam, true, true);
-    
+
 	GlutViewer::DrawableClear();
-	for (size_t i=0; i<marker_detector.markers->size(); i++) 
+	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		if (i >= 32) break;
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
@@ -119,10 +120,10 @@ void KinectAR::detectMarkers()
 
 		GlutViewer::DrawableAdd(&(d[i]));
 		//std::cout << p.translation[0] << " " << p.translation[1] << " " << p.translation[2] << std::endl;
-	} 
+	}
 }
 
-void KinectAR::DispatchDraws() 
+void KinectAR::DispatchDraws()
 {
 	pthread_mutex_lock(&depth_mutex);
 	if (got_depth) {
@@ -133,7 +134,7 @@ void KinectAR::DispatchDraws()
 	pthread_mutex_lock(&video_mutex);
 	if (got_rgb) {
 		glutSetWindow(video_window);
-		glutPostRedisplay();	
+		glutPostRedisplay();
 	}
 	pthread_mutex_unlock(&video_mutex);
 }
@@ -164,12 +165,12 @@ void KinectAR::DrawDepthScene()
 	glTexCoord2f(1, 1); glVertex3f(640,480,0);
 	glTexCoord2f(0, 1); glVertex3f(0,480,0);
 	glEnd();
-	
+
 	detectMarkers();
 	// send the data
 	sendMsg(32);
 
-	
+
 	glutSwapBuffers();
 }
 
@@ -210,7 +211,7 @@ void KinectAR::DrawVideoScene()
 	glTexCoord2f(1, 1); glVertex3f(frame_mode.width,frame_mode.height,0);
 	glTexCoord2f(0, 1); glVertex3f(0,frame_mode.height,0);
 	glEnd();
-	
+
 	glutSwapBuffers();
 	//glutPostRedisplay();
 }
@@ -263,11 +264,11 @@ void KinectAR::mainLoop()
 {
 	freenect_set_video_mode(f_dev, freenect_find_video_mode(current_resolution, current_format));
 	freenect_set_depth_mode(f_dev, freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_11BIT));
-	
+
 	rgb_back  = (uint8_t*)malloc(freenect_find_video_mode(current_resolution, current_format).bytes);
 	rgb_mid   = (uint8_t*)malloc(freenect_find_video_mode(current_resolution, current_format).bytes);
 	rgb_front = (uint8_t*)malloc(freenect_find_video_mode(current_resolution, current_format).bytes);
-	
+
 	freenect_set_video_buffer(f_dev, rgb_back);
 	freenect_start_depth(f_dev);
 	freenect_start_video(f_dev);
@@ -371,7 +372,7 @@ void KinectAR::openChannel(const char* channelName)
 	}
 }
 
-void KinectAR::sendMsg(size_t n) 
+void KinectAR::sendMsg(size_t n)
 {
 	size_t size = msg_size(n);
 	sendMarker* sm = ALLOCA_MSG(n);
@@ -379,36 +380,36 @@ void KinectAR::sendMsg(size_t n)
 
 	// set the number of objects
 	sm->counter = n;
-	
+
 	// loop over all markers
-	for (size_t i=0; i<marker_detector.markers->size(); i++) 
+	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
-		
+
 		// get the quaternion orientation
 		double tmp[4];
 		CvMat mat = cvMat(4, 1, CV_64F, tmp);
 		p.GetQuaternion(&mat);
 		double* test = (double*)mat.data.ptr;
-		
+
 		// set visibility
 		sm->visibleMask = mask_set_i(sm->visibleMask, i, 1);
-		
+
 		// set position
 		// set the positions
-		for(int j = 0; j < 3; j++) 
+		for(int j = 0; j < 3; j++)
 		{
 			sm->tf[i].translation[j] = p.translation[j] * 1e-2;
 		}
-		
+
 		// set the orientation
-		for(int j = 0; j < 4; j++) 
+		for(int j = 0; j < 4; j++)
 		{
-			sm->tf[i].rotation[j] = *(test+j); 
+			sm->tf[i].rotation[j] = *(test+j);
 		}
-	} 
-	
+	}
+
 	// send out the message via ACH
 	// put it into the channel
 	enum ach_status r;
@@ -420,7 +421,7 @@ void KinectAR::sendMsg(size_t n)
 		{
 			syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
 		}
-		
+
 		// some debug messages
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{

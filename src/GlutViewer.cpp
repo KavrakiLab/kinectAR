@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
 #include "GlutViewer.h"
 
 #include "Rotation.h"
@@ -45,7 +46,7 @@ void Drawable::DrawAxis(double scale, double color[3])
 
 		glVertex3f( scale/2,  scale/2, 0.0);
 		glVertex3f( scale/2, -scale/2, 0.0);
-		
+
 		glVertex3f( scale/2, -scale/2, 0.0);
 		glVertex3f(-scale/2, -scale/2, 0.0);
 	glEnd();
@@ -108,7 +109,7 @@ void Drawable::SetGLMatTraRod(double *tra, double *rod)
 	CvMat cv_gl_mat;
 	cvInitMatHeader(&cv_gl_mat, 4, 4, CV_64F, gl_mat); cvSetIdentity(&cv_gl_mat);
 
-	// Figure out the rotation part 
+	// Figure out the rotation part
 	double rot_mat_data[3][3];
 	CvMat rot_mat = cvMat(3, 3, CV_64F, rot_mat_data);
 	cvSetIdentity(&rot_mat);
@@ -202,15 +203,15 @@ void GlutViewer::KeyCallback(int key, int x, int y)
 		off_x-=1;
 		break;
 	case GLUT_KEY_RIGHT:
-		off_x+=1;		
+		off_x+=1;
 		break;
 	case GLUT_KEY_UP:
 		off_y-=1;
 		break;
 	case GLUT_KEY_DOWN:
-		off_y+=1;	
+		off_y+=1;
 		break;
-		
+
 	}
 }
 
@@ -353,7 +354,7 @@ void GlutViewer::DrawVr()
 	glTranslatef(panx, pany, -rad);
 	glRotatef(-elev, 1.0, 0.0, 0.0);
 	glRotatef( azim, 0.0, 1.0, 0.0);
-	
+
 	float pos[4] = {50, 0, 50};
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
@@ -445,7 +446,7 @@ void GlutViewer::DrawVideo()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, image);
 
 	glEnable(GL_TEXTURE_2D);
-	
+
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
@@ -475,7 +476,7 @@ void GlutViewer::Init(int argc, char** argv, int w, int h)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(w, h);
-	
+
 	ar_window = glutCreateWindow("AR");
 	glutDisplayFunc(DrawAr);
 	//glutReshapeFunc(Reshape);

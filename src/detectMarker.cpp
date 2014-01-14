@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
 /*
  * This file is part of the OpenKinect Project. http://www.openkinect.org
  *
@@ -14,7 +15,7 @@
  * If you redistribute this file in source form, modified or unmodified, you
  * may:
  *   1) Leave this header intact and distribute it under the same terms,
- *      accompanying it with the APACHE20 and GPL20 files, or
+ *	accompanying it with the APACHE20 and GPL20 files, or
  *   2) Delete the Apache 2.0 clause and accompany it with the GPL2 file, or
  *   3) Delete the GPL v2 clause and accompany it with the APACHE20 file
  * In all cases you must keep the copyright notice intact and include a copy
@@ -136,7 +137,7 @@ void *freenect_threadfunc(void *arg)
 	//freenect_set_led(f_dev,LED_RED);
 	freenect_set_depth_callback(kinect.f_dev, depth_cb);
 	freenect_set_video_callback(kinect.f_dev, video_cb);
-	
+
 	kinect.mainLoop();
 	return NULL;
 }
@@ -145,10 +146,10 @@ void *freenect_threadfunc(void *arg)
 int main(int argc, char **argv)
 {
 	int res;
-	
-	// initialize the tracker 
+
+	// initialize the tracker
 	kinect.openChannel(argv[1]);
-	
+
 	res = pthread_create(&freenect_thread, NULL, freenect_threadfunc, NULL);
 	if (res) {
 		printf("pthread_create failed\n");
