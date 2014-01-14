@@ -20,6 +20,11 @@ AC_C_RESTRICT
 AC_C_INLINE
 AC_C_CONST
 
+# Enable C++11
+m4_ifdef([AX_CXX_HEADER_STDCXX_11],
+         [AX_CXX_HEADER_STDCXX_11],
+         [AX_CXX_COMPILE_STDCXX_0X
+         if test x"$ax_cv_cxx_compile_cxx0x_gxx" = xyes; then CXXFLAGS="$CXXFLAGS -std=gnu++0x"; fi])
 
 # Enable maximum warnings
 dnl m4_ifdef([AX_CFLAGS_WARN_ALL],
