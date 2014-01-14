@@ -51,6 +51,8 @@
 
 #include <kinectAR.h>
 
+#include <sns.h>
+
 pthread_t freenect_thread;
 volatile int die = 0;
 
@@ -145,6 +147,7 @@ void *freenect_threadfunc(void *arg)
 
 int main(int argc, char **argv)
 {
+	sns_init();
 	int res;
 
 	// initialize the tracker

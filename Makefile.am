@@ -6,6 +6,6 @@ bin_PROGRAMS = detect_marker
 # gstreamer
 #detect_marker_CFLAGS = $(CFLAGS) $(GLIB_CFLAGS) $(GSTREAMER_CFLAGS)
 detect_marker_SOURCES = src/GlutViewer.cpp src/kinectAR.cpp src/detectMarker.cpp
-detect_marker_LDADD = -lpthread -lglut -lGLU -lGL -lXi -lX11 -lm -lach -lfreenect_sync -lalvarplatform200 -lalvar200 -lopencv_calib3d -lopencv_core
+detect_marker_LDADD = -lpthread -lglut -lGLU -lGL -lXi -lX11 -lm -lach -lfreenect_sync -lalvarplatform200 -lalvar200 -lopencv_calib3d -lopencv_core -lsns -lamino -lgfortran -lblas -llapack
 
 

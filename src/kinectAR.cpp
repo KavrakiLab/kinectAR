@@ -1,5 +1,43 @@
 /* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
+/*
+ * Copyright (c) 2013, Georgia Tech Research Corporation
+ * All rights reserved.
+ *
+ * Author(s): Heni Ben Amor
+ *
+ * This file is provided under the following "BSD-style" License:
+ *
+ *
+ *   Redistribution and use in source and binary forms, with or
+ *   without modification, are permitted provided that the following
+ *   conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ *   CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ *   INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ *   MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ *   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ *   USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ *   AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *   ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *   POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 #include "kinectAR.h"
+#include <sns.h>
 
 static inline size_t msg_size( size_t n ) {
 	return sizeof(struct sendMarker) - sizeof(struct tf_qv) + (n) * sizeof(struct tf_qv);
@@ -15,8 +53,6 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 KinectAR::KinectAR()
 {
-	volatile int die = 0;
-
 	// color shading
 	int i;
 	for (i=0; i<2048; i++) {
@@ -274,7 +310,8 @@ void KinectAR::mainLoop()
 	freenect_start_video(f_dev);
 
 	int status = 0;
-	while (!die && status >= 0) {
+	while (!sns_cx.shutdown && status >= 0) {
+		aa_mem_region_local_release();
 		status = freenect_process_events(f_ctx);
 		if (requested_format != current_format || requested_resolution != current_resolution) {
 			freenect_stop_video(f_dev);
@@ -364,26 +401,21 @@ void KinectAR::depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp)
 
 void KinectAR::openChannel(const char* channelName)
 {
-	enum ach_status r = ach_open( &channel, channelName, NULL );
-	if( ACH_OK != r )
-	{
-		syslog( LOG_ERR, "Could not open channel: %s\n", ach_result_to_string(r) );
-		exit(EXIT_FAILURE);
-	}
+	sns_chan_open( &channel, channelName, NULL );
 }
 
 void KinectAR::sendMsg(size_t n)
 {
-	size_t size = msg_size(n);
-	sendMarker* sm = ALLOCA_MSG(n);
-	memset( sm, 0, size );
-
 	// set the number of objects
-	sm->counter = n;
+	struct timespec now = sns_now();
+
+	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n);
 
 	// loop over all markers
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
+		sns_wt_tf *wt_tf = &msg->wt_tf[i];
+
 		int id = (*(marker_detector.markers))[i].GetId();
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
 
@@ -394,29 +426,24 @@ void KinectAR::sendMsg(size_t n)
 		double* test = (double*)mat.data.ptr;
 
 		// set visibility
-		sm->visibleMask = mask_set_i(sm->visibleMask, i, 1);
+		// TODO: really check visibility here -ntd
+		wt_tf->weight = 1;
 
 		// set position
 		// set the positions
 		for(int j = 0; j < 3; j++)
-		{
-			sm->tf[i].translation[j] = p.translation[j] * 1e-2;
-		}
+			wt_tf->tf.v.data[j] = p.translation[j] * 1e-2;
 
 		// set the orientation
-		for(int j = 0; j < 4; j++)
-		{
-			sm->tf[i].rotation[j] = *(test+j);
-		}
+		for(int j = 0; j < 4; j++) // TODO: double check the quaternion order: xyzw or wxzy?
+			wt_tf->tf.r.data[j] = *(test+j);
 	}
 
 	// send out the message via ACH
 	// put it into the channel
-	enum ach_status r;
 	if(marker_detector.markers->size() > 0)
 	{
-		r = ach_put( &channel, sm, size );
-
+		enum ach_status r = sns_msg_wt_tf_put( &channel, msg );
 		if( ACH_OK != r )
 		{
 			syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
@@ -425,8 +452,17 @@ void KinectAR::sendMsg(size_t n)
 		// some debug messages
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{
-			std::cout << "[ROT]: " << sm->tf[i].rotation[0] << " " << sm->tf[i].rotation[1] << " " << sm->tf[i].rotation[2] << " " << sm->tf[i].rotation[3] << std::endl;
-			std::cout << "[POS]: " << sm->tf[i].translation[0] << " " << sm->tf[i].translation[1] << " " << sm->tf[i].translation[2] << std::endl;
+			std::cout << "[ROT]: "
+				  << msg->wt_tf[i].tf.r.x << " "
+				  << msg->wt_tf[i].tf.r.y << " "
+				  << msg->wt_tf[i].tf.r.z << " "
+				  << msg->wt_tf[i].tf.r.w << " "
+				  << std::endl;
+			std::cout << "[POS]: "
+				  << msg->wt_tf[i].tf.v.x << " "
+				  << msg->wt_tf[i].tf.v.y << " "
+				  << msg->wt_tf[i].tf.v.z << " "
+				  << std::endl;
 		}
 	}
 }
