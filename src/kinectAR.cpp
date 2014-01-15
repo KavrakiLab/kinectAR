@@ -435,8 +435,10 @@ void KinectAR::sendMsg(size_t n)
 			wt_tf->tf.v.data[j] = p.translation[j] * 1e-2;
 
 		// set the orientation
-		for(int j = 0; j < 4; j++) // TODO: double check the quaternion order: xyzw or wxzy?
-			wt_tf->tf.r.data[j] = *(test+j);
+		wt_tf->tf.r.w = *(test+j)[0];
+		wt_tf->tf.r.x = *(test+j)[1];
+		wt_tf->tf.r.y = *(test+j)[2];
+		wt_tf->tf.r.z = *(test+j)[3];
 	}
 
 	// send out the message via ACH
