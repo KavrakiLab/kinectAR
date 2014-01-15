@@ -39,6 +39,8 @@
 #include "kinectAR.h"
 #include <sns.h>
 
+const double fudgeParam = 0.175;
+
 static inline size_t msg_size( size_t n ) {
 	return sizeof(struct sendMarker) - sizeof(struct tf_qv) + (n) * sizeof(struct tf_qv);
 }
@@ -103,14 +105,14 @@ KinectAR::KinectAR()
 		exit(0);
 	}
 
-	marker_size = 3.75;
+	marker_size = 2.8 - fudgeParam;
 	image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
 }
 
 void KinectAR::detectMarkers()
 {
 	static int a = 0;
-	std::cout << "Frame #: " << a << std::endl;
+	//std::cout << "Frame #: " << a << std::endl;
 	a++;
 
 	image->imageData = (char *)rgb_mid;
@@ -425,8 +427,7 @@ void KinectAR::sendMsg(size_t n)
 		p.GetQuaternion(&mat);
 		double* test = (double*)mat.data.ptr;
 
-		// set visibility
-		// TODO: really check visibility here -ntd
+		// set visibility		
 		wt_tf->weight = 1;
 
 		// set position
@@ -435,10 +436,10 @@ void KinectAR::sendMsg(size_t n)
 			wt_tf->tf.v.data[j] = p.translation[j] * 1e-2;
 
 		// set the orientation
-		wt_tf->tf.r.w = *(test+j)[0];
-		wt_tf->tf.r.x = *(test+j)[1];
-		wt_tf->tf.r.y = *(test+j)[2];
-		wt_tf->tf.r.z = *(test+j)[3];
+		wt_tf->tf.r.w = *(test+0);
+		wt_tf->tf.r.x = *(test+1);
+		wt_tf->tf.r.y = *(test+2);
+		wt_tf->tf.r.z = *(test+3);
 	}
 
 	// send out the message via ACH
@@ -454,16 +455,17 @@ void KinectAR::sendMsg(size_t n)
 		// some debug messages
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{
+			int currId = (*(marker_detector.markers))[i].GetId();
 			std::cout << "[ROT]: "
-				  << msg->wt_tf[i].tf.r.x << " "
-				  << msg->wt_tf[i].tf.r.y << " "
-				  << msg->wt_tf[i].tf.r.z << " "
-				  << msg->wt_tf[i].tf.r.w << " "
+				  << msg->wt_tf[currId].tf.r.x << " "
+				  << msg->wt_tf[currId].tf.r.y << " "
+				  << msg->wt_tf[currId].tf.r.z << " "
+				  << msg->wt_tf[currId].tf.r.w << " "
 				  << std::endl;
 			std::cout << "[POS]: "
-				  << msg->wt_tf[i].tf.v.x << " "
-				  << msg->wt_tf[i].tf.v.y << " "
-				  << msg->wt_tf[i].tf.v.z << " "
+				  << msg->wt_tf[currId].tf.v.x << " "
+				  << msg->wt_tf[currId].tf.v.y << " "
+				  << msg->wt_tf[currId].tf.v.z << " "
 				  << std::endl;
 		}
 	}

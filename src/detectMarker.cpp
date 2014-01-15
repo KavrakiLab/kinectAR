@@ -147,9 +147,16 @@ void *freenect_threadfunc(void *arg)
 
 int main(int argc, char **argv)
 {
+	// check number of arguments
+	if(argc < 2)
+	{
+		std::cout << "Please provide a channel name!\n Example: " << (char*)argv[0] << " mychannel\n\n" << std::cout; 
+		exit(0);
+	}
+	
 	sns_init();
 	int res;
-
+	
 	// initialize the tracker
 	kinect.openChannel(argv[1]);
 
