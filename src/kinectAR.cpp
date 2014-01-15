@@ -423,7 +423,7 @@ void KinectAR::sendMsg(size_t n)
 		double tmp[4];
 		CvMat mat = cvMat(4, 1, CV_64F, tmp);
 		p.GetQuaternion(&mat);
-		double* test = (double*)mat.data.ptr;
+		double* alvar_quat = (double*)mat.data.ptr;
 
 		// set visibility
 		// TODO: really check visibility here -ntd
@@ -435,10 +435,10 @@ void KinectAR::sendMsg(size_t n)
 			wt_tf->tf.v.data[j] = p.translation[j] * 1e-2;
 
 		// set the orientation
-		wt_tf->tf.r.w = *(test+j)[0];
-		wt_tf->tf.r.x = *(test+j)[1];
-		wt_tf->tf.r.y = *(test+j)[2];
-		wt_tf->tf.r.z = *(test+j)[3];
+		wt_tf->tf.r.w = alvar_quat[0];
+		wt_tf->tf.r.x = alvar_quat[1];
+		wt_tf->tf.r.y = alvar_quat[2];
+		wt_tf->tf.r.z = alvar_quat[3];
 	}
 
 	// send out the message via ACH
