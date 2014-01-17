@@ -449,16 +449,16 @@ void KinectAR::sendMsg(size_t n)
 	}
 
 	// send out the message via ACH
-	// put it into the channel
-	if(marker_detector.markers->size() > 0)
+	enum ach_status r = sns_msg_wt_tf_put( &channel, msg );
+	if( ACH_OK != r )
 	{
-		enum ach_status r = sns_msg_wt_tf_put( &channel, msg );
-		if( ACH_OK != r )
-		{
-			syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
-		}
+		syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
+	}
 
-		// some debug messages
+	// some debug messages
+	if(marker_detector.markers->size() > 0 &&
+		 sns_cx.verbosity )
+	{
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{
 			int currId = (*(marker_detector.markers))[i].GetId();
