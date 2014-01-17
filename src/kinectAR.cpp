@@ -206,6 +206,8 @@ void KinectAR::DrawDepthScene()
 
 	detectMarkers();
 	// send the data
+
+	// FIXME: What is the right number?
 	sendMsg(32);
 
 
@@ -413,10 +415,14 @@ void KinectAR::sendMsg(size_t n)
 
 	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n);
 
-	// loop over all markers
+	// loop over all visibile markers
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
+		if( id >= n ) {
+			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
+			continue;
+		}
 		sns_wt_tf *wt_tf = &msg->wt_tf[id];
 
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
@@ -427,7 +433,7 @@ void KinectAR::sendMsg(size_t n)
 		p.GetQuaternion(&mat);
 		double* alvar_quat = (double*)mat.data.ptr;
 
-		// set visibility		
+		// set visibility
 		wt_tf->weight = 1;
 
 		// set position
