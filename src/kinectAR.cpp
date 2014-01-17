@@ -414,6 +414,7 @@ void KinectAR::sendMsg(size_t n)
 	struct timespec now = sns_now();
 
 	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n);
+	sns_msg_set_time( &msg->header, &now, 0 );
 
 	// loop over all visibile markers
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
