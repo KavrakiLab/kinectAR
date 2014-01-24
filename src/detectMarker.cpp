@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "libfreenect.h"
 
 #include <pthread.h>
 
@@ -53,122 +52,34 @@
 
 #include <sns.h>
 
-pthread_t freenect_thread;
-volatile int die = 0;
+using namespace cv;
+using namespace std;
 
-int g_argc;
-char **g_argv;
 
 KinectAR kinect;
 
-
-void DispatchDraws() {
-	kinect.DispatchDraws();
-}
-
-void DrawDepthScene()
-{
-	kinect.DrawDepthScene();
-}
-
-void DrawVideoScene()
-{
-	kinect.DrawVideoScene();
-}
-
-void keyPressed(unsigned char key, int x, int y)
-{
-}
-
-void ReSizeGLScene(int Width, int Height)
-{
-	kinect.ReSizeGLScene(Width, Height);
-}
-
-void InitGL(int Width, int Height)
-{
-	kinect.InitGL(Width, Height);
-}
-
-void depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp)
-{
-	kinect.depth_cb(dev, v_depth, timestamp);
-}
-
-
-void* gl_threadfunc(void *arg)
-{
-	printf("GL thread\n");
-
-	glutInit(&g_argc, g_argv);
-
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH);
-	glutInitWindowSize(640, 480);
-	glutInitWindowPosition(0, 0);
-
-	kinect.depth_window = glutCreateWindow("Depth");
-	glutDisplayFunc(&DrawDepthScene);
-	glutIdleFunc(&DispatchDraws);
-	glutKeyboardFunc(&keyPressed);
-	InitGL(640, 480);
-
-	freenect_frame_mode mode = freenect_find_video_mode(kinect.current_resolution, kinect.current_format);
-	glutInitWindowPosition(640,0);
-	glutInitWindowSize(mode.width, mode.height);
-	kinect.video_window = glutCreateWindow("Video");
-
-	glutDisplayFunc(&DrawVideoScene);
-	glutIdleFunc(&DispatchDraws);
-	glutReshapeFunc(&ReSizeGLScene);
-	glutKeyboardFunc(&keyPressed);
-
-	InitGL(640, 480);
-	ReSizeGLScene(mode.width, mode.height);
-	glutMainLoop();
-
-	return NULL;
-}
-
-void video_cb(freenect_device *dev, void *rgb, uint32_t timestamp)
-{
-	kinect.video_cb(dev, rgb, timestamp);
-}
-
-void *freenect_threadfunc(void *arg)
-{
-	//freenect_set_led(f_dev,LED_RED);
-	freenect_set_depth_callback(kinect.f_dev, depth_cb);
-	freenect_set_video_callback(kinect.f_dev, video_cb);
-
-	kinect.mainLoop();
-	return NULL;
-}
-
-
 int main(int argc, char **argv)
 {
-	// check number of arguments
-	if(argc < 2)
+	// draw image
+	while(true)
 	{
-		std::cout << "Please provide a channel name!\n Example: " << (char*)argv[0] << " mychannel\n\n" << std::cout; 
-		exit(0);
+		if( !kinect.capture.grab() )
+		{
+			cout << "Can not grab images." << endl;
+			return -1;
+		}
+		else
+		{
+			kinect.DrawScene();
+			kinect.DetectMarkers();
+			kinect.CreatePointCloud();
+			//kinect.SendMsg(32);
+		}
+		
+		if( waitKey( 30 ) >= 0 )
+			kinect.Keyboard('n', 1, 1);
+		//break;
 	}
-	
-	sns_init();
-	int res;
-	
-	// initialize the tracker
-	kinect.openChannel(argv[1]);
 
-	res = pthread_create(&freenect_thread, NULL, freenect_threadfunc, NULL);
-	if (res) {
-		printf("pthread_create failed\n");
-		freenect_shutdown(kinect.f_ctx);
-		return 1;
-	}
-
-	// OS X requires GLUT to run on the main thread
-	gl_threadfunc(NULL);
-
-	return 0;
+return 0;
 }
