@@ -181,14 +181,20 @@ void KinectAR::SendMsg(size_t n)
 	struct timespec now = sns_now();
 
 	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n*2);
+	sns_msg_set_time( &msg->header, &now, 0 );
 
-	// loop over all markers
+	// loop over all visibile markers
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
+		if( id >= n ) {
+			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
+			continue;
+		}
+		
 		sns_wt_tf *wt_tfK = &msg->wt_tf[id];
 		sns_wt_tf *wt_tfA = &msg->wt_tf[id+n];
-		
+
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
 
 		// get the quaternion orientation
@@ -228,17 +234,16 @@ void KinectAR::SendMsg(size_t n)
 	}
 
 	// send out the message via ACH
-	// put it into the channel
-	if(marker_detector.markers->size() > 0)
+	enum ach_status r = sns_msg_wt_tf_put( &channel, msg );
+	if( ACH_OK != r )
 	{
-		enum ach_status r = sns_msg_wt_tf_put( &channel, msg );
-		if( ACH_OK != r )
-		{
-			syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
-		}
-		
+		syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
+	}
 
-		// some debug messages
+	// some debug messages
+	if(marker_detector.markers->size() > 0 &&
+		 sns_cx.verbosity )
+	{
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{
 			/*int currId = (*(marker_detector.markers))[i].GetId();
