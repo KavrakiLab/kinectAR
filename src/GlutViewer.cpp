@@ -200,19 +200,20 @@ void GlutViewer::KeyCallback(int key, int x, int y)
 	switch(key)
 	{
 	case GLUT_KEY_LEFT:
-		off_x-=1;
+		off_x-=10;
 		break;
 	case GLUT_KEY_RIGHT:
-		off_x+=1;
+		off_x+=10;
 		break;
 	case GLUT_KEY_UP:
-		off_y-=1;
+		off_y-=10;
 		break;
 	case GLUT_KEY_DOWN:
-		off_y+=1;
+		off_y+=10;
 		break;
 
 	}
+	std::cout << "Key pressed!" << std::endl;
 }
 
 double GlutViewer::GetXOffset()
@@ -339,7 +340,6 @@ void GlutViewer::DrawContent()
 
 void GlutViewer::DrawVr()
 {
-	glutSetWindow(vr_window);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glClearColor(0.5, 0.2, 0.2, 1.0);
 
@@ -367,7 +367,6 @@ void GlutViewer::DrawVr()
 
 void GlutViewer::DrawAr()
 {
-	glutSetWindow(ar_window);
 	glClearColor(0.2, 0.5, 0.2, 1.0);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -381,8 +380,8 @@ void GlutViewer::DrawAr()
 
 	DrawContent();
 
-	glutSwapBuffers();
-	glutPostRedisplay();
+	//glutSwapBuffers();
+	//glutPostRedisplay();
 }
 
 void GlutViewer::SetGlProjectionMatrix(double p[16]) {
@@ -443,7 +442,7 @@ void GlutViewer::DrawVideo()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	glColor3f(1, 1, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, image);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 1024, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, image);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -468,6 +467,10 @@ void GlutViewer::DrawVideo()
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
+}
+
+void GlutViewer::DrawPixels(std::vector<alvar::PointDouble> markerPix)
+{
 }
 
 /*

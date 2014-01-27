@@ -2,6 +2,7 @@
 #define _GLUTVIEWER_H_
 
 #include <cxcore.h>
+#include <MarkerDetector.h>
 
 #ifdef WIN32
     #include <windows.h>
@@ -62,6 +63,7 @@ namespace GlutViewer
 
 	double GetXOffset();
 	double GetYOffset();
+	void DrawPixels(std::vector<alvar::PointDouble> markerPix);
 }
 
 #endif

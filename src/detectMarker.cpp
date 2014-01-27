@@ -50,6 +50,20 @@
 
 #include <kinectAR.h>
 
+#include <osgDB/ReadFile>
+#include <osgUtil/Optimizer>
+#include <osg/CoordinateSystemNode>
+#include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
+
+#include <osgGA/TrackballManipulator>
+
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/ShapeDrawable>
+#include <osg/PositionAttitudeTransform>
+
+#include <iostream>
 #include <sns.h>
 
 using namespace cv;
@@ -58,11 +72,62 @@ using namespace std;
 
 KinectAR kinect;
 
+
+
 int main(int argc, char **argv)
 {
+	// use an ArgumentParser object to manage the program arguments.
+	int numArgs = 6;
+	char* args[6];
+	args[0]= "program";
+	args[1]= "--window";
+	args[2]= "100";
+	args[3]= "100";
+	args[4]= "400";
+	args[5]= "400";
+	osg::ArgumentParser arguments(&numArgs, args);
+	osgViewer::Viewer viewer(arguments);
+
+	// create the root node of the scenegraph
+	osg::Group *root = new osg::Group;
+	
+	// add the table
+	osg::Geode* table 	 = new osg::Geode;
+	osg::ShapeDrawable* shape  = new osg::ShapeDrawable(new osg::Box(osg::Vec3(0.0f,0.0f,0.0f),70.0f,40.0f,0.05f));
+	osg::PositionAttitudeTransform* transf = new osg::PositionAttitudeTransform;
+	
+	transf->setPosition(osg::Vec3(0,0,120));
+	root->addChild(transf);
+	transf->addChild(table);
+	table->addDrawable(shape);
+	
+	// add a viewport to the viewer and attach the scene graph.
+	viewer.setSceneData(root);
+
+	// set the trackball manipulator
+	viewer.setCameraManipulator(new osgGA::TrackballManipulator());
+	viewer.realize();
+
+	double alpha = 0.0;
+	
+	// add to the sceneGraph
+	for(int i = 0; i < 32; i++)
+	{
+		(kinect.kinectMarkers[i]).AddToSceneGraph(root);
+	}
+	
+	// channel name
+	kinect.OpenChannel(argv[1]);
+			
 	// draw image
 	while(true)
 	{
+		// autoposition wird inkrementiert
+		alpha+=0.01;
+
+		// fire off the cull and draw traversals of the scene.
+		viewer.frame();
+	
 		if( !kinect.capture.grab() )
 		{
 			cout << "Can not grab images." << endl;
@@ -70,10 +135,11 @@ int main(int argc, char **argv)
 		}
 		else
 		{
+		
 			kinect.DrawScene();
 			kinect.DetectMarkers();
 			kinect.CreatePointCloud();
-			//kinect.SendMsg(32);
+			kinect.SendMsg(32);
 		}
 		
 		if( waitKey( 30 ) >= 0 )
@@ -81,5 +147,5 @@ int main(int argc, char **argv)
 		//break;
 	}
 
-return 0;
+	return 0;
 }

@@ -41,7 +41,7 @@
 using namespace cv;
 using namespace std;
 
-const double fudgeParam = 0.2;
+const double fudgeParam = 0.0;
 
 static inline size_t msg_size( size_t n ) {
 	return sizeof(struct sendMarker) - sizeof(struct tf_qv) + (n) * sizeof(struct tf_qv);
@@ -86,6 +86,7 @@ KinectAR::KinectAR()
 		// create a bunch of markers
 		kinectMarkers.push_back(KinectMarker());
 	}
+	init = true;
 }
 
 void KinectAR::DetectMarkers()
@@ -171,6 +172,7 @@ void KinectAR::DrawScene()
 void KinectAR::OpenChannel(const char* channelName)
 {
 	sns_chan_open( &channel, channelName, NULL );
+	std::cout << "Channel open" << std::endl;
 }
 
 void KinectAR::SendMsg(size_t n)
@@ -178,14 +180,15 @@ void KinectAR::SendMsg(size_t n)
 	// set the number of objects
 	struct timespec now = sns_now();
 
-	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n);
+	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n*2);
 
 	// loop over all markers
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
-		sns_wt_tf *wt_tf = &msg->wt_tf[id];
-
+		sns_wt_tf *wt_tfK = &msg->wt_tf[id];
+		sns_wt_tf *wt_tfA = &msg->wt_tf[id+n];
+		
 		alvar::Pose p = (*(marker_detector.markers))[i].pose;
 
 		// get the quaternion orientation
@@ -195,18 +198,19 @@ void KinectAR::SendMsg(size_t n)
 		double* alvar_quat = (double*)mat.data.ptr;
 
 		// set visibility		
-		wt_tf->weight = 1;
-
+		wt_tfA->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
+		wt_tfK->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
+		
 		// 1.) set data of ALVAR
 		// set the positions
 		for(int j = 0; j < 3; j++)
-			wt_tf->tf.v.data[j] = p.translation[j] * 1e-2;
+			wt_tfA->tf.v.data[j] = p.translation[j] * 1e-2;
 
 		// set the orientation
-		wt_tf->tf.r.w = alvar_quat[0];
-		wt_tf->tf.r.x = alvar_quat[1];
-		wt_tf->tf.r.y = alvar_quat[2];
-		wt_tf->tf.r.z = alvar_quat[3];
+		wt_tfA->tf.r.w = alvar_quat[0];
+		wt_tfA->tf.r.x = alvar_quat[1];
+		wt_tfA->tf.r.y = alvar_quat[2];
+		wt_tfA->tf.r.z = alvar_quat[3];
 		
 		// 2.) set the data of Kinect
 		// set the positions
@@ -214,13 +218,13 @@ void KinectAR::SendMsg(size_t n)
 		double* kquat = kinectMarkers[i].GetKinectQuat();
 		
 		for(int j = 0; j < 3; j++)
-			wt_tf->tf.v.data[j] = kpos[j] * 1e-2;
+			wt_tfK->tf.v.data[j] = kpos[j] * 1e-2;
 
 		// set the orientation
-		wt_tf->tf.r.w = kquat[0];
-		wt_tf->tf.r.x = kquat[1];
-		wt_tf->tf.r.y = kquat[2];
-		wt_tf->tf.r.z = kquat[3];
+		wt_tfK->tf.r.w = kquat[0];
+		wt_tfK->tf.r.x = kquat[1];
+		wt_tfK->tf.r.y = kquat[2];
+		wt_tfK->tf.r.z = kquat[3];
 	}
 
 	// send out the message via ACH

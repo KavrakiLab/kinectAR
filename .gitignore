@@ -17,3 +17,8 @@
 /config.log
 /config.status
 /config.h.in
+*~
+*.o
+core
+octave-core
+*.yml

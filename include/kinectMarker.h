@@ -22,7 +22,21 @@
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/filters/project_inliers.h>
 #include <pcl/common/impl/centroid.hpp>
+#include <pcl/common/pca.h>
 #include <pcl/segmentation/impl/organized_multi_plane_segmentation.hpp>
+
+#include <osgDB/ReadFile>
+#include <osgUtil/Optimizer>
+#include <osg/CoordinateSystemNode>
+#include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
+
+#include <osgGA/TrackballManipulator>
+
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/ShapeDrawable>
+#include <osg/PositionAttitudeTransform>
 
 #include <MarkerDetector.h>
 #include <GlutViewer.h>
@@ -63,7 +77,10 @@ public:
 	inline double* GetKinectQuat() {return kinectQuat;}
 	inline Eigen::Vector3f GetKinectPos() {return kinectPos;}
 	
-protected:
+	// added to scenegraph
+	void AddToSceneGraph(osg::Group *root);
+	
+public:
 	// fit plane into a point cloud
 	void FitPlane();
 	
@@ -95,4 +112,13 @@ protected:
 	double kinectQuat[4];
 	
 	bool visible;
+	
+	// OSG stuff
+	osg::PositionAttitudeTransform* transf;
+
+	// dann fgen wir eine box als geometrie ein
+	osg::Geode* geometry; 
+	osg::ShapeDrawable* shape; 
+	
+	bool useOSG;
 };
