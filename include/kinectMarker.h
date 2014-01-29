@@ -119,6 +119,7 @@ public:
 	// the current kinect quat
 	Eigen::Vector3f kinectPos;
 	double kinectQuat[4];
+	osg::Quat kinQuat;
 	
 	bool visible = false;
 	

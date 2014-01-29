@@ -118,24 +118,21 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 			
 		// set quaternion
 		osg::Quat quat;
-		quat[0] = kinectQuat[1];
-		quat[1] = kinectQuat[2];
-		quat[2] = kinectQuat[3];
-		quat[3] = kinectQuat[0];
 		
-		/*double tmp[4];
+		double tmp[4];
 		CvMat q = cvMat(4, 1, CV_64F, tmp);
 		alvarPose.GetQuaternion(&q);
 		double* alvar_quat = (double*)q.data.ptr;
 		quat[0] = alvar_quat[1];
 		quat[1] = alvar_quat[2];
 		quat[2] = alvar_quat[3];
-		quat[3] = alvar_quat[0];*/
+		quat[3] = alvar_quat[0];
 		
+		std::cout << "AlvQuat: " << quat[0] << " " << quat[1] << " " << quat[2] << " " << quat[3] << std::endl;
 		
 		transf->setPosition( pos + osg::Vec3(0,0,50));
 			//std::cout << "Error: " << alvarData->GetError() << std::endl;
-			//transf->setAttitude( quat );
+		//transf->setAttitude( quat );
 		
 	}
 	else if(useOSG)
@@ -174,10 +171,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr KinectMarker::CalculateCorner3D(cv::Mat dept
 	double cx_v = modex * 0.5;
 	double cy_v = modey * 0.5;
        
-	//cx_v = 3.1182863810012958e+02; // +/- 0.015
-	//cy_v = 2.4457008413833782e+02; // +/- 0.015
-	//fx_v = 5.8661298611948848e+02; // +/- 0.085
-	//fy_v = 5.8619682256008525e+02; // +/- 0.096
+	cx_v = 3.1182863810012958e+02; // +/- 0.015
+	cy_v = 2.4457008413833782e+02; // +/- 0.015
+	fx_v = 5.8661298611948848e+02; // +/- 0.085
+	fy_v = 5.8619682256008525e+02; // +/- 0.096
 
 	double calibData[16] = {
 		fx_v,	0.0,	cx_v,	0.0,
@@ -511,18 +508,18 @@ int KinectMarker::extractFrame (const pcl::ModelCoefficients& coeffs,
     // (inverse) matrix with the given properties
     osg::Vec3 v = (q2-q1);
     v.normalize();
-    std::cout << "v1: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+    //std::cout << "v1: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
     osg::Vec3 v2 = (q3-q4);
     v2.normalize();
-    std::cout << "v2: " << v2[0] << " " << v2[1] << " " << v2[2] << std::endl;
+    //std::cout << "v2: " << v2[0] << " " << v2[1] << " " << v2[2] << std::endl;
     //v = (v + v2)/2.0;
     
-	std::cout << "------------" << alvarData->GetId() << std::endl;	
+/*	std::cout << "------------" << alvarData->GetId() << std::endl;	
     	std::cout << q1[0]<< " " << q1[1] << " " << q1[2] << std::endl;
 	std::cout << q2[0]<< " " << q2[1] << " " << q2[2] << std::endl;
 	std::cout << q3[0]<< " " << q3[1] << " " << q3[2] << std::endl;
 	std::cout << q4[0]<< " " << q4[1] << " " << q4[2] << std::endl;
-	std::cout << "------------" << std::endl;	
+	std::cout << "------------" << std::endl;	*/
     
     
     osg::Vec3 n(a, b, c);
@@ -573,7 +570,11 @@ int KinectMarker::extractFrame (const pcl::ModelCoefficients& coeffs,
     quat[2] = kquat[3];
     quat[3] = kquat[0];
     
-    transf->setAttitude(quat);
+    kinQuat = quat*osg::Quat(osg::DegreesToRadians(180.0), osg::Vec3(0,0,1));
+    kinQuat[3] = -kinQuat[3];
+    
+    std::cout << "KinQuat: " << kinQuat[0] << " " << kinQuat[1] << " " << kinQuat[2] << " " << kinQuat[3] << std::endl;
+    transf->setAttitude(kinQuat);
     
     return 0;
 }
