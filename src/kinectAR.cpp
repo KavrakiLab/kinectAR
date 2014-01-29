@@ -144,13 +144,13 @@ void KinectAR::DrawScene()
 			std::vector<alvar::PointDouble> imgPoints2 = kinectMarkers[i].GetCornerPoints();
 
 			
-			for(int j = 0; j < imgPoints2.size(); j++)
+			for(int j = 1; j <= 1; j++)
 			{
 				int im = 0;
-				if(j == 0 || j ==1)
+				/*if(j == 0 || j ==1)
 					im = 0;
 				if(j == 2 || j ==3)
-					im = 2;	
+					im = 2;	*/
 				// project to low res depth image
 				int nx = imgPoints2[im].x / 2;
 				int ny = imgPoints2[im].y / 2;
@@ -282,9 +282,11 @@ void KinectAR::CreatePointCloud()
 	for(int k=0; k < (*(marker_detector.markers)).size(); k++)
 	{
 		kinectMarkers[k].CalculatePointCloud(depthMap);
+		kinectMarkers[k].CalculateCorner3D(depthMap);
+		
 		kinectMarkers[k].GetNormalVector();
-		kinectMarkers[k].PrintAlvarPose();
-		kinectMarkers[k].PrintKinectPose();
+		//kinectMarkers[k].PrintAlvarPose();
+		//kinectMarkers[k].PrintKinectPose();
 	}
 }
 

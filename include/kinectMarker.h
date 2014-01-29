@@ -24,6 +24,8 @@
 #include <pcl/common/impl/centroid.hpp>
 #include <pcl/common/pca.h>
 #include <pcl/segmentation/impl/organized_multi_plane_segmentation.hpp>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <osgDB/ReadFile>
 #include <osgUtil/Optimizer>
@@ -79,10 +81,16 @@ public:
 	
 	// added to scenegraph
 	void AddToSceneGraph(osg::Group *root);
+	void DrawCoordinateSys();
 	
 public:
 	// fit plane into a point cloud
 	void FitPlane();
+	pcl::ModelCoefficients::Ptr fitPlane2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+	int  getCoeffs(const pcl::ModelCoefficients& coeffs, double* a, double* b, double* c, double* d);
+	osg::Vec3 project(pcl::PointXYZ p, const double a, const double b, const double c, const double d);
+	int extractFrame (const pcl::ModelCoefficients& coeffs, const pcl::PointXYZ p1, const pcl::PointXYZ p2, const pcl::PointXYZ p3, const pcl::PointXYZ p4);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr CalculateCorner3D(cv::Mat depthMap);
 	
 	// turn a point into a cv::Mat
 	cv::Mat PointToMat(pcl::PointXYZRGBA p);
@@ -103,6 +111,7 @@ public:
 	// current point cloud of all marker points
 	pcl::PointCloud<pcl::PointXYZ>::Ptr pcloud;
 	std::vector<pcl::PointXYZRGBA> markerCorners3D;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr scorner3D;
 	
 	// the current alvar pose
 	alvar::Pose alvarPose;
@@ -111,11 +120,15 @@ public:
 	Eigen::Vector3f kinectPos;
 	double kinectQuat[4];
 	
-	bool visible;
+	bool visible = false;
 	
 	// OSG stuff
 	osg::PositionAttitudeTransform* transf;
 
+	osg::PositionAttitudeTransform* xTrans;
+	osg::PositionAttitudeTransform* yTrans;
+	osg::PositionAttitudeTransform* zTrans;
+	
 	// dann fgen wir eine box als geometrie ein
 	osg::Geode* geometry; 
 	osg::ShapeDrawable* shape; 
