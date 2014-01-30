@@ -187,7 +187,7 @@ void KinectAR::SendMsg(size_t n)
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
-		if( id >= n ) {
+		if( id >= n || id > 20) {
 			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
 			continue;
 		}
@@ -227,10 +227,10 @@ void KinectAR::SendMsg(size_t n)
 			wt_tfK->tf.v.data[j] = kpos[j] * 1e-2;
 
 		// set the orientation
-		wt_tfK->tf.r.w = kquat[0];
-		wt_tfK->tf.r.x = kquat[1];
-		wt_tfK->tf.r.y = kquat[2];
-		wt_tfK->tf.r.z = kquat[3];
+		wt_tfK->tf.r.w = kquat[3];
+		wt_tfK->tf.r.x = kquat[0];
+		wt_tfK->tf.r.y = kquat[1];
+		wt_tfK->tf.r.z = kquat[2];
 	}
 
 	// send out the message via ACH

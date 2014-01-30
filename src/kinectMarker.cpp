@@ -67,7 +67,7 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 	alvarData = newData;
 	
 	// see if visible
-	if(alvarData->GetError() < 0.05)
+	if(alvarData->GetError() == 0.0)
 		visible = true; 
 	else 
 	{
@@ -130,9 +130,9 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 		
 		std::cout << "AlvQuat: " << quat[0] << " " << quat[1] << " " << quat[2] << " " << quat[3] << std::endl;
 		
-		transf->setPosition( pos + osg::Vec3(0,0,50));
+		transf->setPosition( pos );
 			//std::cout << "Error: " << alvarData->GetError() << std::endl;
-		//transf->setAttitude( quat );
+		transf->setAttitude( quat );
 		
 	}
 	else if(useOSG)
@@ -573,8 +573,14 @@ int KinectMarker::extractFrame (const pcl::ModelCoefficients& coeffs,
     kinQuat = quat*osg::Quat(osg::DegreesToRadians(180.0), osg::Vec3(0,0,1));
     kinQuat[3] = -kinQuat[3];
     
+    // set the kinectQuat
+    kinectQuat[0] = kinQuat[0];
+    kinectQuat[1] = kinQuat[1];
+    kinectQuat[2] = kinQuat[2];
+    kinectQuat[3] = kinQuat[3];
+    
     std::cout << "KinQuat: " << kinQuat[0] << " " << kinQuat[1] << " " << kinQuat[2] << " " << kinQuat[3] << std::endl;
-    transf->setAttitude(kinQuat);
+    //transf->setAttitude(kinQuat);
     
     return 0;
 }
