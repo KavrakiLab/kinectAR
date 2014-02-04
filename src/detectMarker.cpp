@@ -65,6 +65,7 @@
 #include <osg/CoordinateSystemNode>
 #include <osgViewer/Viewer>
 #include <osgViewer/ViewerEventHandlers>
+#include <getopt.h>
 
 #include <osgGA/TrackballManipulator>
 
@@ -83,9 +84,32 @@ using namespace std;
 KinectAR kinect;
 
 
+const char *opt_channel = "marker";
+
 
 int main(int argc, char **argv)
 {
+	for( int c; -1 != (c = getopt(argc, argv, "c:?" SNS_OPTSTRING)); ) {
+		switch(c) {
+			SNS_OPTCASES
+		case 'c':
+			opt_channel = optarg;
+			break;
+		case '?':   /* help     */
+		default:
+			puts( "Usage: detect_marker -c channel\n"
+			      "Detect markers with kinect\n"
+			      "\n"
+			      "Options:\n"
+			      "  -c CANNEL,                   Set output Ach channel\n"
+			      "  -?,                          Give program help list\n"
+			      "\n"
+			      "Report bugs to <hbenamor@cc.gatech.edu>" );
+		}
+	}
+
+
+
 	// use an ArgumentParser object to manage the program arguments.
 	int numArgs = 6;
 	char* args[6];
@@ -128,8 +152,8 @@ int main(int argc, char **argv)
 	}
 	
 	// channel name
-	kinect.OpenChannel(argv[1]);
-			
+	kinect.OpenChannel(opt_channel);
+
 	// draw image
 	while(!sns_cx.shutdown)
 	{
