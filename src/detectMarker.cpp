@@ -89,6 +89,7 @@ const char *opt_channel = "marker";
 
 int main(int argc, char **argv)
 {
+	sns_init();
 	for( int c; -1 != (c = getopt(argc, argv, "c:?" SNS_OPTSTRING)); ) {
 		switch(c) {
 			SNS_OPTCASES
