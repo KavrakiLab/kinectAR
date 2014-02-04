@@ -588,27 +588,38 @@ int KinectMarker::extractFrame (const pcl::ModelCoefficients& coeffs,
 
 pcl::ModelCoefficients::Ptr  KinectMarker::fitPlane2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {
-    pcl::ModelCoefficients::Ptr coeff (new pcl::ModelCoefficients);
-    //boost::shared_ptr<std::vector<int> > inliers (new std::vector<int>);
-    pcl::PointIndices::Ptr inliers=boost::make_shared<pcl::PointIndices>();
-     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p (new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::ModelCoefficients::Ptr coeff (new pcl::ModelCoefficients);
+	//boost::shared_ptr<std::vector<int> > inliers (new std::vector<int>);
+	pcl::PointIndices::Ptr inliers=boost::make_shared<pcl::PointIndices>();
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_p (new pcl::PointCloud<pcl::PointXYZ>);
 
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setDistanceThreshold(0.03);
+	pcl::SACSegmentation<pcl::PointXYZ> seg;
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setDistanceThreshold(0.03);
+	seg.setInputCloud(cloud);
+	seg.segment(*inliers, *coeff);
 
-    seg.setInputCloud(cloud);
-    seg.segment(*inliers, *coeff);
+	pcl::ExtractIndices<pcl::PointXYZ> extracter;
+	extracter.setInputCloud(cloud);
+	extracter.setIndices(inliers);
+	extracter.setNegative(false);
+	extracter.filter(*cloud_p);
 
-    pcl::ExtractIndices<pcl::PointXYZ> extracter;
-    extracter.setInputCloud(cloud);
-    extracter.setIndices(inliers);
-    extracter.setNegative(false);
-    extracter.filter(*cloud_p);
+	Eigen::Vector4f centroid;
+	Eigen::Vector3f centroid2;
+	pcl::PointCloud<pcl::PointXYZRGBA> pointcl;
+	copyPointCloud(*pcloud, pointcl);
 
-   return coeff;
+	pcl::compute3DCentroid(*pcloud, centroid);
+	centroid2[0] = centroid[0];
+	centroid2[1] = centroid[1];
+	centroid2[2] = centroid[2];
+
+	kinectPos = centroid2;
+
+	return coeff;
 }
 
 void KinectMarker::FitPlane()

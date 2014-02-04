@@ -181,6 +181,8 @@ int main(int argc, char **argv)
 		if( waitKey( 30 ) >= 0 )
 			kinect.Keyboard('n', 1, 1);
 		//break;
+
+		aa_mem_region_local_release();
 	}
 
 	return 0;
