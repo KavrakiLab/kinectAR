@@ -124,17 +124,17 @@ int main(int argc, char **argv)
 
 	// create the root node of the scenegraph
 	osg::Group *root = new osg::Group;
-	
+
 	// add the table
 	osg::Geode* table 	 = new osg::Geode;
 	osg::ShapeDrawable* shape  = new osg::ShapeDrawable(new osg::Box(osg::Vec3(0.0f,0.0f,0.0f),80.0f,40.0f,0.05f));
 	osg::PositionAttitudeTransform* transf = new osg::PositionAttitudeTransform;
-	
+
 	transf->setPosition(osg::Vec3(0,0,120));
 	root->addChild(transf);
 	transf->addChild(table);
 	table->addDrawable(shape);
-	
+
 	// add a viewport to the viewer and attach the scene graph.
 	viewer.setSceneData(root);
 
@@ -143,14 +143,14 @@ int main(int argc, char **argv)
 	viewer.realize();
 
 	double alpha = 0.0;
-	
+
 	// add to the sceneGraph
 	for(int i = 0; i < 32; i++)
 	{
 		(kinect.kinectMarkers[i]).AddToSceneGraph(root);
 		(kinect.kinectMarkers[i]).DrawCoordinateSys();
 	}
-	
+
 	// channel name
 	kinect.OpenChannel(opt_channel);
 
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 
 		// fire off the cull and draw traversals of the scene.
 		viewer.frame();
-	
+
 		if( !kinect.capture.grab() )
 		{
 			cout << "Can not grab images." << endl;
@@ -170,13 +170,13 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-		
+
 			kinect.DrawScene();
 			kinect.DetectMarkers();
 			kinect.CreatePointCloud();
 			kinect.SendMsg(32);
 		}
-		
+
 		if( waitKey( 30 ) >= 0 )
 			kinect.Keyboard('n', 1, 1);
 		//break;

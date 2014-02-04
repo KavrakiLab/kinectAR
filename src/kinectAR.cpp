@@ -59,7 +59,7 @@ KinectAR::KinectAR()
 {
 	marker_size = 2.8 - fudgeParam;
 	image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
-	
+
 	int imageMode;
 	bool isVideoReading;
 
@@ -79,7 +79,7 @@ KinectAR::KinectAR()
 		bool modeRes=false;
 		modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
 	}
-	
+
 	// create the markers to be tracked
 	for(int i = 0; i < 32; i++)
 	{
@@ -94,7 +94,7 @@ void KinectAR::DetectMarkers()
 	static int a = 0;
 	//std::cout << "Frame #: " << a << std::endl;
 	a++;
-	
+
 	image->imageData = (char *) bgrImage.data;
 
 	if (init)
@@ -119,11 +119,11 @@ void KinectAR::DetectMarkers()
 			d[i].SetScale(marker_size);
 		}
 	}
-	
+
 	// for marker ids larger than 255, set the content resolution accordingly
-	marker_detector.SetMarkerSize(marker_size, 5, 2); 
+	marker_detector.SetMarkerSize(marker_size, 5, 2);
 	marker_detector.Detect(image, &cam, false, false);
-	
+
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		//alvar::Pose p = (*(marker_detector.markers))[i].pose;
@@ -138,12 +138,12 @@ void KinectAR::DrawScene()
 	{
 		const float scaleFactor = 0.05f;
 		depthMap.convertTo( show, CV_8UC1, scaleFactor );
-		
+
 		for(int i = 0; i < marker_detector.markers->size(); i++)
-		{	
+		{
 			std::vector<alvar::PointDouble> imgPoints2 = kinectMarkers[i].GetCornerPoints();
 
-			
+
 			for(int j = 1; j <= 1; j++)
 			{
 				int im = 0;
@@ -154,14 +154,14 @@ void KinectAR::DrawScene()
 				// project to low res depth image
 				int nx = imgPoints2[im].x / 2;
 				int ny = imgPoints2[im].y / 2;
-				
+
 				int index = (int)(ny * show.cols + nx);
 				if(index < 0 || index >= (show.cols * show.rows))
 					continue;
-				
+
 				show.data[index] = 255;
 			}
-		}	
+		}
 		imshow( "depth map", show );
 	}
 
@@ -191,7 +191,7 @@ void KinectAR::SendMsg(size_t n)
 			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
 			continue;
 		}
-		
+
 		sns_wt_tf *wt_tfK = &msg->wt_tf[id];
 		sns_wt_tf *wt_tfA = &msg->wt_tf[id+n];
 
@@ -203,10 +203,10 @@ void KinectAR::SendMsg(size_t n)
 		p.GetQuaternion(&mat);
 		double* alvar_quat = (double*)mat.data.ptr;
 
-		// set visibility		
+		// set visibility
 		wt_tfA->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
 		wt_tfK->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
-		
+
 		// 1.) set data of ALVAR
 		// set the positions
 		for(int j = 0; j < 3; j++)
@@ -217,12 +217,12 @@ void KinectAR::SendMsg(size_t n)
 		wt_tfA->tf.r.x = alvar_quat[1];
 		wt_tfA->tf.r.y = alvar_quat[2];
 		wt_tfA->tf.r.z = alvar_quat[3];
-		
+
 		// 2.) set the data of Kinect
 		// set the positions
 		Eigen::Vector3f kpos  = kinectMarkers[i].GetKinectPos();
 		double* kquat = kinectMarkers[i].GetKinectQuat();
-		
+
 		for(int j = 0; j < 3; j++)
 			wt_tfK->tf.v.data[j] = kpos[j] * 1e-2;
 
@@ -269,21 +269,21 @@ void KinectAR::CreatePointCloud()
 	{
 		for(int j = 0; j < show.cols; j++)
 		{
-	
+
 			int d = (int) show.at<uchar>(i,j);
 			file << d << " "; // << std::endl;
 		}
 		file << std::endl;
 	}
 	file.close();*/
-	
+
 	//markerPoints2D.clear();
 	capture.retrieve( depthMap, CV_CAP_OPENNI_DEPTH_MAP );
 	for(int k=0; k < (*(marker_detector.markers)).size(); k++)
 	{
 		kinectMarkers[k].CalculatePointCloud(depthMap);
 		kinectMarkers[k].CalculateCorner3D(depthMap);
-		
+
 		kinectMarkers[k].GetNormalVector();
 		//kinectMarkers[k].PrintAlvarPose();
 		//kinectMarkers[k].PrintKinectPose();
@@ -301,4 +301,3 @@ void KinectAR::Keyboard(int key, int x, int y)
 	}
 	std::cout << "Key pressed!" << std::endl;
 }
-
