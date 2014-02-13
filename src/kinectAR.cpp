@@ -184,6 +184,10 @@ void KinectAR::SendMsg(size_t n)
 	sns_msg_set_time( &msg->header, &now, 0 );
 
 	// loop over all visibile markers
+
+	alvar::Pose p;
+	double tmp[4];
+	CvMat mat = cvMat(4, 1, CV_64F, tmp);
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
@@ -192,14 +196,12 @@ void KinectAR::SendMsg(size_t n)
 			continue;
 		}
 
-		sns_wt_tf *wt_tfK = &msg->wt_tf[id];
-		sns_wt_tf *wt_tfA = &msg->wt_tf[id+n];
+		sns_wt_tf *wt_tfK = &(msg->wt_tf[id]);
+		sns_wt_tf *wt_tfA = &(msg->wt_tf[id+n]);
 
-		alvar::Pose p = (*(marker_detector.markers))[i].pose;
+		p = (*(marker_detector.markers))[i].pose;
 
 		// get the quaternion orientation
-		double tmp[4];
-		CvMat mat = cvMat(4, 1, CV_64F, tmp);
 		p.GetQuaternion(&mat);
 		double* alvar_quat = (double*)mat.data.ptr;
 
