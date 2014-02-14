@@ -59,12 +59,12 @@ class KinectAR
 {
 public:
 	// constructor
-	KinectAR();
+	KinectAR(bool kinectCam, double markerSize);
 	
-	void DrawScene();
+	void UpdateScene(bool draw);
 	void Keyboard(int key, int x, int y);
 	
-	void DetectMarkers();
+	void DetectMarkers(bool print);
 	void CreatePointCloud();
 	void OpenChannel(const char* channelName);
 	void UpdateMarkerInfo();
@@ -80,6 +80,8 @@ public:
 	// for AR
 	bool init=true;
 	double marker_size;
+	bool useKinect = true;
+	
 	alvar::Camera cam;
 	Drawable d[32];
 	alvar::MarkerDetector<alvar::MarkerData> marker_detector;
