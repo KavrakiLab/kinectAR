@@ -12,6 +12,7 @@ int sign(double x)
 KinectMarker::KinectMarker()
 {
 	visible = false;
+	useOSG  = false;
 }
 
 void KinectMarker::AddToSceneGraph(osg::Group *root)
@@ -97,12 +98,6 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 					p.y += j;
 					markerPointsImg.push_back(p);
 				}
-
-		/*for(int k = 0; k < markerPointsImg.size(); k++)
-		{
-			alvar::PointDouble p = markerPointsImg[k];
-			std::cout << p.x << " " << p.y << std::endl;
-		}*/
 	}
 
 	// sort corner points
@@ -128,11 +123,8 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 		quat[1] = alvar_quat[2];
 		quat[2] = alvar_quat[3];
 		quat[3] = alvar_quat[0];
-
-		std::cout << "AlvQuat: " << quat[0] << " " << quat[1] << " " << quat[2] << " " << quat[3] << std::endl;
-
+		
 		transf->setPosition( pos );
-			//std::cout << "Error: " << alvarData->GetError() << std::endl;
 		transf->setAttitude( quat );
 
 	}
@@ -400,7 +392,6 @@ void KinectMarker::GetNormalVector()
 
 	// get the marker corners
 	int pclSize = scorner3D->points.size();
-	std::cout << "Size: " << pclSize << std::endl;
 
 	pcl::PointXYZ c1 = scorner3D->points[0];
 	pcl::PointXYZ c2 = scorner3D->points[1];
@@ -417,8 +408,8 @@ void KinectMarker::PrintKinectPose()
 	if(!visible)
 		return;
 
-	std::cout << "k: " << kinectPos[0] << " " << kinectPos[1] << " " << kinectPos[2] << std::endl;
-	//std::cout << "k: " << kinectQuat[0] << " " << kinectQuat[1] << " " << kinectQuat[2] << " " << kinectQuat[3] << std::endl;
+	std::cout << "Kinect  (Pos): " << kinectPos[0] << " " << kinectPos[1] << " " << kinectPos[2] << std::endl;
+	std::cout << "Kinect (Quat): " << kinectQuat[0] << " " << kinectQuat[1] << " " << kinectQuat[2] << " " << kinectQuat[3] << std::endl;
 }
 
 void KinectMarker::PrintAlvarPose()
@@ -426,12 +417,13 @@ void KinectMarker::PrintAlvarPose()
 	if(!visible)
 		return;
 
-	std::cout << "a: " << alvarPose.translation[0] << " " << alvarPose.translation[1] << " " << alvarPose.translation[2] << std::endl;
 	double tmp[4];
 	CvMat q = cvMat(4, 1, CV_64F, tmp);
 	alvarPose.GetQuaternion(&q);
 	double* alvar_quat = (double*)q.data.ptr;
-	//std::cout << "a: " << alvar_quat[0] << " " << alvar_quat[1] << " " << alvar_quat[2] << " " << alvar_quat[3] << std::endl;
+
+	std::cout << "Alvar (Pos): " << alvarPose.translation[0] << " " << alvarPose.translation[1] << " " << alvarPose.translation[2] << std::endl;
+	std::cout << "Alvar (Quat): " << alvar_quat[0] << " " << alvar_quat[1] << " " << alvar_quat[2] << " " << alvar_quat[3] << std::endl;
 }
 
 void KinectMarker::ToQuaternion(double  m[3][3], double* quat)
@@ -579,8 +571,7 @@ int KinectMarker::extractFrame (const pcl::ModelCoefficients& coeffs,
     kinectQuat[1] = kinQuat[1];
     kinectQuat[2] = kinQuat[2];
     kinectQuat[3] = kinQuat[3];
-
-    std::cout << "KinQuat: " << kinQuat[0] << " " << kinQuat[1] << " " << kinQuat[2] << " " << kinQuat[3] << std::endl;
+    
     //transf->setAttitude(kinQuat);
 
     return 0;

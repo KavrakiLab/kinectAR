@@ -80,13 +80,44 @@
 using namespace cv;
 using namespace std;
 
-
-KinectAR kinect;
-
+bool useGraphics = true;
+bool useKinect   = false;
 
 const char *opt_channel = "marker";
 
+/**
+ * Creates a scene graph for 3D visualization
+ */
+osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
+{
+	// create the root node of the scenegraph
+	osg::Group *root = new osg::Group;
 
+	// add the table
+	osg::Geode* table 	 = new osg::Geode;
+	osg::ShapeDrawable* shape  = new osg::ShapeDrawable(new osg::Box(osg::Vec3(0.0f,0.0f,0.0f),80.0f,40.0f,0.05f));
+	osg::PositionAttitudeTransform* transf = new osg::PositionAttitudeTransform;
+
+	transf->setPosition(osg::Vec3(0,0,125));
+	root->addChild(transf);
+	transf->addChild(table);
+	table->addDrawable(shape);
+
+	// add a viewport to the viewer and attach the scene graph.
+	viewer->setSceneData(root);
+
+	// set the trackball manipulator
+	viewer->setCameraManipulator(new osgGA::TrackballManipulator());
+	
+	// only initialize Scenegraph if we actually want to display something
+	viewer->realize();
+	
+	return root;
+}
+
+/**
+ * Main loop
+ */
 int main(int argc, char **argv)
 {
 	sns_init();
@@ -109,79 +140,76 @@ int main(int argc, char **argv)
 		}
 	}
 
+	// create a camera processing module
+	KinectAR camera(useKinect, 2.75);
 
-
+	// create a scene graph
 	// use an ArgumentParser object to manage the program arguments.
 	int numArgs = 6;
-	char* args[6];
+	char* args[numArgs];
 	args[0]= "program";
 	args[1]= "--window";
 	args[2]= "100";
 	args[3]= "100";
 	args[4]= "400";
 	args[5]= "400";
+	
 	osg::ArgumentParser arguments(&numArgs, args);
-	osgViewer::Viewer viewer(arguments);
-
-	// create the root node of the scenegraph
-	osg::Group *root = new osg::Group;
-
-	// add the table
-	osg::Geode* table 	 = new osg::Geode;
-	osg::ShapeDrawable* shape  = new osg::ShapeDrawable(new osg::Box(osg::Vec3(0.0f,0.0f,0.0f),80.0f,40.0f,0.05f));
-	osg::PositionAttitudeTransform* transf = new osg::PositionAttitudeTransform;
-
-	transf->setPosition(osg::Vec3(0,0,120));
-	root->addChild(transf);
-	transf->addChild(table);
-	table->addDrawable(shape);
-
-	// add a viewport to the viewer and attach the scene graph.
-	viewer.setSceneData(root);
-
-	// set the trackball manipulator
-	viewer.setCameraManipulator(new osgGA::TrackballManipulator());
-	viewer.realize();
-
-	double alpha = 0.0;
-
+	osgViewer::Viewer* viewer;
+	osg::Group* root;
+	
 	// add to the sceneGraph
-	for(int i = 0; i < 32; i++)
+	// only add to scene graph if we are visualizing things
+	if(useGraphics)
 	{
-		(kinect.kinectMarkers[i]).AddToSceneGraph(root);
-		(kinect.kinectMarkers[i]).DrawCoordinateSys();
+		viewer = new osgViewer::Viewer(arguments);
+		
+		root = createSceneGraph(viewer);
+		for(int i = 0; i < 32; i++)
+		{
+			(camera.kinectMarkers[i]).AddToSceneGraph(root);
+			(camera.kinectMarkers[i]).DrawCoordinateSys();
+		}
 	}
 
 	// channel name
-	kinect.OpenChannel(opt_channel);
+	camera.OpenChannel(opt_channel);
 
 	// draw image
 	while(!sns_cx.shutdown)
 	{
-		// autoposition wird inkrementiert
-		alpha+=0.01;
-
-		// fire off the cull and draw traversals of the scene.
-		viewer.frame();
-
-		if( !kinect.capture.grab() )
+		// grab a new frame
+		if( !camera.capture.grab() )
 		{
 			cout << "Can not grab images." << endl;
 			return -1;
 		}
 		else
 		{
+			// process video image and draw scene
+			camera.UpdateScene(useGraphics);
 
-			kinect.DrawScene();
-			kinect.DetectMarkers();
-			kinect.CreatePointCloud();
-			kinect.SendMsg(32);
+			// detect the marker in the scene
+			camera.DetectMarkers(!useGraphics);
+			
+			// do kinect processing
+			if(useKinect)
+			{
+				camera.CreatePointCloud();
+			}
+			
+			// send the data
+			camera.SendMsg(32);
 		}
 
+		// process keyboard input
 		if( waitKey( 30 ) >= 0 )
-			kinect.Keyboard('n', 1, 1);
-		//break;
-
+			camera.Keyboard('n', 1, 1);
+		
+		// fire off the cull and draw traversals of the scene.
+		if(useGraphics) 
+			viewer->frame();
+	
 		aa_mem_region_local_release();
 	}
 

@@ -55,19 +55,32 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR()
+KinectAR::KinectAR(bool kinectCam, double markerSize)
 {
-	marker_size = 2.8 - fudgeParam;
-	image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
-
 	int imageMode;
 	bool isVideoReading;
-
-	std::cout << "Kinect Device opening ..." << std::endl;
-	capture.open( CV_CAP_OPENNI );
-
-	std::cout << "done." << std::endl;
-
+	useKinect = kinectCam;
+	
+	// set the marker size
+	marker_size = markerSize;
+	
+	// using the kinect
+	if(useKinect)
+	{
+		image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
+		std::cout << "Kinect Device opening ..." << std::endl;
+		capture.open( CV_CAP_OPENNI );
+		std::cout << "done." << std::endl;
+	}
+	
+	// using the webcam
+	else
+	{
+		image = cvCreateImage(cvSize(1920,1080), IPL_DEPTH_8U, 3);
+		capture.open( 0 );
+	}
+	
+	// did not find any camera
 	if( !capture.isOpened() )
 	{
 		std::cout << "Can not open a capture object." << std::endl;
@@ -77,7 +90,15 @@ KinectAR::KinectAR()
 	if( !isVideoReading )
 	{
 		bool modeRes=false;
-		modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
+		
+		if(useKinect)
+			modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
+		
+		else
+		{
+			capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);
+			capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);
+		}
 	}
 
 	// create the markers to be tracked
@@ -86,87 +107,61 @@ KinectAR::KinectAR()
 		// create a bunch of markers
 		kinectMarkers.push_back(KinectMarker());
 	}
+	
+	// finished initialization
 	init = true;
 }
 
-void KinectAR::DetectMarkers()
+void KinectAR::DetectMarkers(bool print)
 {
-	static int a = 0;
-	//std::cout << "Frame #: " << a << std::endl;
-	a++;
-
+	// get the current video image
 	image->imageData = (char *) bgrImage.data;
 
 	if (init)
 	{
 		init = false;
-		//cout<<"Loading calibration: "<<calibrationFilename.str();
-		if (false)
+		if(useKinect)
 		{
-			std::cout<<" [Ok]"<< std::endl;
+			// no calibration needed in this case
+			cam.SetRes(image->width, image->height);
 		}
 		else
 		{
-			cam.SetRes(image->width, image->height);
-			//cam.SetCalib("calib.xml", image->width, image->height);
-			std::cout<<" [Fail]"<< std::endl;
-		}
-
-		double p[16];
-		cam.GetOpenglProjectionMatrix(p,image->width,image->height);
-		for (int i=0; i<32; i++)
-		{
-			d[i].SetScale(marker_size);
+			// load calibration data
+			cam.SetCalib("calib.xml", image->width, image->height);
+			std::cout<<" [Loading Camera Calibration Successful!]"<< std::endl;
 		}
 	}
 
 	// for marker ids larger than 255, set the content resolution accordingly
 	marker_detector.SetMarkerSize(marker_size, 5, 2);
-	marker_detector.Detect(image, &cam, false, false);
+	marker_detector.Detect(image, &cam, true, false);
 
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
-		//alvar::Pose p = (*(marker_detector.markers))[i].pose;
 		kinectMarkers[i].Update(&(*(marker_detector.markers))[i]);
+		
+		// print out the current pose
+		if(print) kinectMarkers[i].PrintAlvarPose();
 	}
-	//std::cout << "Num Markers: " << marker_detector.markers->size() << std::endl;
 }
 
-void KinectAR::DrawScene()
+void KinectAR::UpdateScene(bool draw)
 {
-	if(capture.retrieve( depthMap, CV_CAP_OPENNI_DEPTH_MAP ) )
+	// get image from camera
+	if(useKinect)
 	{
-		const float scaleFactor = 0.05f;
-		depthMap.convertTo( show, CV_8UC1, scaleFactor );
-
-		for(int i = 0; i < marker_detector.markers->size(); i++)
-		{
-			std::vector<alvar::PointDouble> imgPoints2 = kinectMarkers[i].GetCornerPoints();
-
-
-			for(int j = 1; j <= 1; j++)
-			{
-				int im = 0;
-				/*if(j == 0 || j ==1)
-					im = 0;
-				if(j == 2 || j ==3)
-					im = 2;	*/
-				// project to low res depth image
-				int nx = imgPoints2[im].x / 2;
-				int ny = imgPoints2[im].y / 2;
-
-				int index = (int)(ny * show.cols + nx);
-				if(index < 0 || index >= (show.cols * show.rows))
-					continue;
-
-				show.data[index] = 255;
-			}
-		}
-		imshow( "depth map", show );
+		capture.retrieve( bgrImage, CV_CAP_OPENNI_BGR_IMAGE );
+		capture.retrieve( depthMap, CV_CAP_OPENNI_DEPTH_MAP );
 	}
-
-	if(capture.retrieve( bgrImage, CV_CAP_OPENNI_BGR_IMAGE ) )
-	imshow( "rgb image", bgrImage );
+	else
+	{
+		capture >> bgrImage;
+	}
+	
+	// only draw if corresponding flag is set
+	if(draw)
+		imshow( "rgb image", bgrImage );
 }
 
 void KinectAR::OpenChannel(const char* channelName)
@@ -184,7 +179,6 @@ void KinectAR::SendMsg(size_t n)
 	sns_msg_set_time( &msg->header, &now, 0 );
 
 	// loop over all visibile markers
-
 	alvar::Pose p;
 	double tmp[4];
 	CvMat mat = cvMat(4, 1, CV_64F, tmp);
@@ -287,8 +281,6 @@ void KinectAR::CreatePointCloud()
 		kinectMarkers[k].CalculateCorner3D(depthMap);
 
 		kinectMarkers[k].GetNormalVector();
-		//kinectMarkers[k].PrintAlvarPose();
-		//kinectMarkers[k].PrintKinectPose();
 	}
 }
 
