@@ -53,10 +53,10 @@
 #include <GL/glu.h>
 #endif
 
-#include <AR/gsub.h>
+/*#include <AR/gsub.h>
 #include <AR/param.h>
 #include <AR/ar.h>
-#include <AR/video.h>
+#include <AR/video.h>*/
 
 #include <kinectAR.h>
 
