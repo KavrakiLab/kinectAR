@@ -83,7 +83,7 @@ public:
 	bool useKinect = true;
 	
 	alvar::Camera cam;
-	Drawable d[32];
+	//Drawable d[32];
 	alvar::MarkerDetector<alvar::MarkerData> marker_detector;
 	
 	IplImage* image;

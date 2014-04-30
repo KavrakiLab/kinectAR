@@ -48,7 +48,6 @@ AC_CHECK_HEADERS([GL/glut.h])
 
 # pkg-config does exactly what it was meant to do
 PKG_CHECK_MODULES([GLIB], [glib-2.0])
-PKG_CHECK_MODULES([GSTREAMER], [gstreamer-0.10])
 PKG_CHECK_MODULES([OPENCV], [opencv])
 
 CFLAGS="$CFLAGS $GLIB_CFLAGS $GSTREAMER_CFLAGS $OPENCV_CFLAGS"

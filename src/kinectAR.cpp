@@ -137,9 +137,13 @@ void KinectAR::DetectMarkers(bool print)
 	marker_detector.SetMarkerSize(marker_size, 5, 2);
 	marker_detector.Detect(image, &cam, true, false);
 
+	//std::cout << image->imageData.size << std::endl;
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		kinectMarkers[i].Update(&(*(marker_detector.markers))[i]);
+		
+		//int id = (*(marker_detector.markers))[i].GetId();
+		//SNS_LOG( LOG_ERR, "Detected Num: %d\n", id );
 		
 		// print out the current pose
 		if(print) kinectMarkers[i].PrintAlvarPose();
