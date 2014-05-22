@@ -55,50 +55,54 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR(bool kinectCam, double markerSize)
+KinectAR::KinectAR(CamMode mode, double markerSize)
 {
 	int imageMode;
-	bool isVideoReading;
-	useKinect = kinectCam;
+	camMode = mode;
 	
 	// set the marker size
 	marker_size = markerSize;
 	
 	// using the kinect
-	if(useKinect)
+	if(camMode == KINECT)
 	{
 		image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
 		std::cout << "Kinect Device opening ..." << std::endl;
 		capture.open( CV_CAP_OPENNI );
 		std::cout << "done." << std::endl;
 	}
-	
-	// using the webcam
 	else
 	{
 		image = cvCreateImage(cvSize(1920,1080), IPL_DEPTH_8U, 3);
-		capture.open( 0 );
+		
+		// using the web cam
+		if (camMode == NORMAL)
+		{
+			capture.open( 0 );
+			
+			// did not find any camera
+			if( !capture.isOpened() )
+			{
+				std::cout << "Can not open a capture object." << std::endl;
+				exit(0);
+			}
+		}
+		// using ach
+		else if (camMode == ACH)
+		{
+			rec.init("video1", 1920, 1080);
+		}
 	}
 	
-	// did not find any camera
-	if( !capture.isOpened() )
-	{
-		std::cout << "Can not open a capture object." << std::endl;
-		exit(0);
-	}
-
-	if( !isVideoReading )
-	{
-		bool modeRes=false;
+	bool modeRes=false;
 		
-		if(useKinect)
-			modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
-		
-		else
-		{
-			capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);
-			capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);
-		}
+	if(camMode == KINECT)
+		modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
+	
+	else
+	{
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);
 	}
 
 	// create the markers to be tracked
@@ -120,7 +124,7 @@ void KinectAR::DetectMarkers(bool print)
 	if (init)
 	{
 		init = false;
-		if(useKinect)
+		if(camMode == KINECT)
 		{
 			// no calibration needed in this case
 			cam.SetRes(image->width, image->height);
@@ -153,10 +157,15 @@ void KinectAR::DetectMarkers(bool print)
 void KinectAR::UpdateScene(bool draw)
 {
 	// get image from camera
-	if(useKinect)
+	if(camMode == KINECT)
 	{
 		capture.retrieve( bgrImage, CV_CAP_OPENNI_BGR_IMAGE );
 		capture.retrieve( depthMap, CV_CAP_OPENNI_DEPTH_MAP );
+	}
+	else if (camMode == ACH)
+	{
+		// streaming of pictures
+		bgrImage = rec.receiveImage();
 	}
 	else
 	{
@@ -179,7 +188,12 @@ void KinectAR::SendMsg(size_t n)
 	// set the number of objects
 	struct timespec now = sns_now();
 
-	sns_msg_wt_tf *msg = sns_msg_wt_tf_local_alloc(n*2);
+	sns_msg_wt_tf *msg;
+	if( KINECT == camMode ) {
+		msg = sns_msg_wt_tf_local_alloc(n*2);
+	} else {
+		msg = sns_msg_wt_tf_local_alloc(n);
+	}
 	sns_msg_set_time( &msg->header, &now, 0 );
 
 	// loop over all visibile markers
@@ -187,15 +201,14 @@ void KinectAR::SendMsg(size_t n)
 	double tmp[4];
 	CvMat mat = cvMat(4, 1, CV_64F, tmp);
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
-	{
+	{		
 		int id = (*(marker_detector.markers))[i].GetId();
-		if( id >= n || id > 20) {
+		if( id >= n ) {
 			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
 			continue;
 		}
 
-		sns_wt_tf *wt_tfK = &(msg->wt_tf[id]);
-		sns_wt_tf *wt_tfA = &(msg->wt_tf[id+n]);
+		sns_wt_tf *wt_tfA = &(msg->wt_tf[id]);
 
 		p = (*(marker_detector.markers))[i].pose;
 
@@ -205,8 +218,7 @@ void KinectAR::SendMsg(size_t n)
 
 		// set visibility
 		wt_tfA->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
-		wt_tfK->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
-
+		
 		// 1.) set data of ALVAR
 		// set the positions
 		for(int j = 0; j < 3; j++)
@@ -220,17 +232,27 @@ void KinectAR::SendMsg(size_t n)
 
 		// 2.) set the data of Kinect
 		// set the positions
-		Eigen::Vector3f kpos  = kinectMarkers[i].GetKinectPos();
-		double* kquat = kinectMarkers[i].GetKinectQuat();
+		if(camMode == KINECT)
+		{
+			assert( n*2 == msg->header.n );
+			sns_wt_tf *wt_tfK = &(msg->wt_tf[id+n]);
+			Eigen::Vector3f kpos  = kinectMarkers[i].GetKinectPos();
+			double* kquat = kinectMarkers[i].GetKinectQuat();
 
-		for(int j = 0; j < 3; j++)
-			wt_tfK->tf.v.data[j] = kpos[j] * 1e-2;
+			for(int j = 0; j < 3; j++)
+				wt_tfK->tf.v.data[j] = kpos[j] * 1e-2;
 
-		// set the orientation
-		wt_tfK->tf.r.w = kquat[3];
-		wt_tfK->tf.r.x = kquat[0];
-		wt_tfK->tf.r.y = kquat[1];
-		wt_tfK->tf.r.z = kquat[2];
+			// set the orientation
+			wt_tfK->tf.r.w = kquat[3];
+			wt_tfK->tf.r.x = kquat[0];
+			wt_tfK->tf.r.y = kquat[1];
+			wt_tfK->tf.r.z = kquat[2];
+			
+			// set weight of marker
+			wt_tfK->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
+		} else {
+				assert( n == msg->header.n );
+		}
 	}
 
 	// send out the message via ACH
@@ -246,7 +268,7 @@ void KinectAR::SendMsg(size_t n)
 	{
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{
-			/*int currId = (*(marker_detector.markers))[i].GetId();
+			int currId = (*(marker_detector.markers))[i].GetId();
 			std::cout << "[ROT]: "
 				  << msg->wt_tf[currId].tf.r.x << " "
 				  << msg->wt_tf[currId].tf.r.y << " "
@@ -257,7 +279,7 @@ void KinectAR::SendMsg(size_t n)
 				  << msg->wt_tf[currId].tf.v.x << " "
 				  << msg->wt_tf[currId].tf.v.y << " "
 				  << msg->wt_tf[currId].tf.v.z << " "
-				  << std::endl;*/
+				  << std::endl;
 		}
 	}
 }
