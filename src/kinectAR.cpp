@@ -55,7 +55,7 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR(CamMode mode, double markerSize)
+KinectAR::KinectAR(CamMode mode, char* calibFileName, double markerSize)
 {
 	int imageMode;
 	camMode = mode;
@@ -114,6 +114,7 @@ KinectAR::KinectAR(CamMode mode, double markerSize)
 	
 	// finished initialization
 	init = true;
+	calib = calibFileName;
 }
 
 void KinectAR::DetectMarkers(bool print)
@@ -132,14 +133,14 @@ void KinectAR::DetectMarkers(bool print)
 		else
 		{
 			// load calibration data
-			cam.SetCalib("calib.xml", image->width, image->height);
+			cam.SetCalib(calib, image->width, image->height);
 			std::cout<<" [Loading Camera Calibration Successful!]"<< std::endl;
 		}
 	}
 
 	// for marker ids larger than 255, set the content resolution accordingly
 	marker_detector.SetMarkerSize(marker_size, 5, 2);
-	marker_detector.Detect(image, &cam, true, false);
+	marker_detector.Detect(image, &cam, false, false);
 
 	//std::cout << image->imageData.size << std::endl;
 	for (size_t i=0; i<marker_detector.markers->size(); i++)

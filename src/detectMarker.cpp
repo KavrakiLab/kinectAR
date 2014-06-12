@@ -53,11 +53,6 @@
 #include <GL/glu.h>
 #endif
 
-/*#include <AR/gsub.h>
-#include <AR/param.h>
-#include <AR/ar.h>
-#include <AR/video.h>*/
-
 #include <kinectAR.h>
 
 #include <osgDB/ReadFile>
@@ -80,10 +75,12 @@
 using namespace cv;
 using namespace std;
 
-bool useGraphics = true;
+CamMode mode;
 bool useKinect   = false;
+bool useGraphics = true;
 
-const char *opt_channel = "marker";
+const char *opt_channel = "markers";
+char *inp_type = "normal";
 
 /**
  * Creates a scene graph for 3D visualization
@@ -121,27 +118,40 @@ osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
 int main(int argc, char **argv)
 {
 	sns_init();
-	for( int c; -1 != (c = getopt(argc, argv, "c:?" SNS_OPTSTRING)); ) {
+	for( int c; -1 != (c = getopt(argc, argv, "i:gc:?" SNS_OPTSTRING)); ) {
 		switch(c) {
-			SNS_OPTCASES
+			SNS_OPTCASES;
+		case 'i':
+			// analyze args
+			if(optarg[0] == 'a')
+				mode = ACH;
+			else if (optarg[0] == 'k')
+				mode = KINECT;
+			else
+				mode = NORMAL;
+			break;
 		case 'c':
 			opt_channel = optarg;
 			break;
 		case '?':   /* help     */
 		default:
-			puts( "Usage: detect_marker -c channel\n"
-			      "Detect markers with kinect\n"
-			      "\n"
-			      "Options:\n"
-			      "  -c CANNEL,                   Set output Ach channel\n"
-			      "  -?,                          Give program help list\n"
-			      "\n"
-			      "Report bugs to <hbenamor@cc.gatech.edu>" );
+			puts( "Usage: detect_marker -c channel -i (normal/kinect/ach)\n"
+			"Detect markers with kinect\n"
+			"\n"
+			"Options:\n"
+			"  -c CHANNEL,                  Set output Ach channel\n"
+			"  -i INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
+			"  -?,                          Give program help list\n"
+			"\n"
+			"Report bugs to <hbenamor@cc.gatech.edu>" );
 		}
 	}
-
+	
 	// create a camera processing module
-	KinectAR camera(useKinect, 2.75);
+	KinectAR camera(mode, "calib.xml", 2.8);
+
+	// channel name
+	camera.OpenChannel(opt_channel);
 
 	// create a scene graph
 	// use an ArgumentParser object to manage the program arguments.
@@ -171,47 +181,44 @@ int main(int argc, char **argv)
 			(camera.kinectMarkers[i]).DrawCoordinateSys();
 		}
 	}
-
-	// channel name
-	camera.OpenChannel(opt_channel);
-
+	
 	// draw image
 	while(!sns_cx.shutdown)
 	{
 		// grab a new frame
-		if( !camera.capture.grab() )
+		if(mode != ACH)
 		{
-			cout << "Can not grab images." << endl;
-			return -1;
-		}
-		else
-		{
-			// process video image and draw scene
-			camera.UpdateScene(useGraphics);
-
-			// detect the marker in the scene
-			camera.DetectMarkers(!useGraphics);
-			
-			// do kinect processing
-			if(useKinect)
+			if( !camera.capture.grab() )
 			{
-				camera.CreatePointCloud();
+				cout << "Can not grab images." << endl;
+				return -1;
 			}
-			
-			// send the data
-			camera.SendMsg(32);
 		}
-
-		// process keyboard input
-		if( waitKey( 30 ) >= 0 )
-			camera.Keyboard('n', 1, 1);
 		
+		// process video image and draw scene
+		camera.UpdateScene(false);
+		
+		// detect the marker in the scene
+		camera.DetectMarkers(true);
+		
+		// do kinect processing
+		if(mode == KINECT)
+		{
+			camera.CreatePointCloud();
+			
+		}
+		// send the data
+		camera.SendMsg(32);
+
 		// fire off the cull and draw traversals of the scene.
 		if(useGraphics) 
 			viewer->frame();
-	
-		aa_mem_region_local_release();
-	}
 
+		// process keyboard input
+		if( waitKey( 30 ) >= 0 )
+			exit(0);
+	}
+	
+	aa_mem_region_local_release();
 	return 0;
 }

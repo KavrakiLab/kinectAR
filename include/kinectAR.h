@@ -31,11 +31,11 @@
 #include <pcl/point_types.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/project_inliers.h>
-
 #include <MarkerDetector.h>
 #include <GlutViewer.h>
 
 #include "kinectMarker.h"
+#include "imageReceiver.h"
 
 struct SPoint
 {
@@ -55,11 +55,13 @@ struct sendMarker
 	struct tf_qv tfk[1];
 };
 
+enum CamMode { NORMAL, ACH, KINECT};
+
 class KinectAR 
 {
 public:
 	// constructor
-	KinectAR(bool kinectCam, double markerSize);
+  KinectAR(CamMode mode, char* calibFile, double markerSize);
 	
 	void UpdateScene(bool draw);
 	void Keyboard(int key, int x, int y);
@@ -98,5 +100,8 @@ public:
 	cv::Mat bgrImage;
 	
 	std::vector<KinectMarker> kinectMarkers;
+	ImageReceiver rec;
+	CamMode camMode;
+	char* calib;
 	
 };
