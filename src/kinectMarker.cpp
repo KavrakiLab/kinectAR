@@ -476,105 +476,105 @@ osg::Vec3 KinectMarker::project(pcl::PointXYZ p, const double a, const double b,
 int KinectMarker::extractFrame (const pcl::ModelCoefficients& coeffs,
 		 const pcl::PointXYZ p1, const pcl::PointXYZ p2,
 		 const pcl::PointXYZ p3, const pcl::PointXYZ p4)
-  {
-    // Get plane coeffs and project points onto the plane
-    double a=0, b=0, c=0, d=0;
-    if(getCoeffs(coeffs, &a, &b, &c, &d) < 0)
-      return -1;
+{
+	// Get plane coeffs and project points onto the plane
+	double a=0, b=0, c=0, d=0;
+	if(getCoeffs(coeffs, &a, &b, &c, &d) < 0)
+	return -1;
 
-	if(c > 0)
+		if(c > 0)
+		{
+			a = -a;
+			b = -b;
+			c = -c;
+		}
+
+	osg::Vec3 q1 = project(p1, a, b, c, d);
+	osg::Vec3 q2 = project(p2, a, b, c, d);
+	osg::Vec3 q3 = project(p3, a, b, c, d);
+	osg::Vec3 q4 = project(p4, a, b, c, d);
+
+	// Make sure points aren't the same so things are well-defined
+	if((q2-q1).length() < 1e-3)
+	return -1;
+
+	// (inverse) matrix with the given properties
+	osg::Vec3 v = (q2-q1);
+	v.normalize();
+	//std::cout << "v1: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+	osg::Vec3 v2 = (q3-q4);
+	v2.normalize();
+	//std::cout << "v2: " << v2[0] << " " << v2[1] << " " << v2[2] << std::endl;
+	//v = (v + v2)/2.0;
+
+	/*	std::cout << "------------" << alvarData->GetId() << std::endl;
+		std::cout << q1[0]<< " " << q1[1] << " " << q1[2] << std::endl;
+		std::cout << q2[0]<< " " << q2[1] << " " << q2[2] << std::endl;
+		std::cout << q3[0]<< " " << q3[1] << " " << q3[2] << std::endl;
+		std::cout << q4[0]<< " " << q4[1] << " " << q4[2] << std::endl;
+		std::cout << "------------" << std::endl;	*/
+
+
+	osg::Vec3 n(a, b, c);
+	osg::Vec3 w = -v ^ n;
+
+	// initialize rotation matrix
+	double  m[3][3] = {
+		{v[0], v[1], v[2]},
+		{w[0], w[1], w[2]},
+		{n[0], n[1], n[2]}
+	};
+
+	// Possibly flip things based on third point
+	osg::Vec3 diff = (q4-q3);
+	diff.normalize();
+
+	//xTrans->setPosition(v*5.0);
+	//yTrans->setPosition(w*5.0);
+	//zTrans->setPosition(n*5.0);
+
+
+	//std::cout << "New Normal: " << n[0] << " " << n[1] << " " << n[2] << std::endl;
+
+	//ROS_INFO_STREAM("w = " << w << " and d = " << diff);
+	/*if (w * diff < 0)
 	{
-		a = -a;
-		b = -b;
-		c = -c;
-	}
+		//ROS_INFO_STREAM("Flipping normal based on p3. Current value: " << m);
+		m[0][1] = -m[0][1];
+		m[1][1] = -m[1][1];
+		m[2][1] = -m[2][1];
 
-    osg::Vec3 q1 = project(p1, a, b, c, d);
-    osg::Vec3 q2 = project(p2, a, b, c, d);
-    osg::Vec3 q3 = project(p3, a, b, c, d);
-    osg::Vec3 q4 = project(p4, a, b, c, d);
+		m[0][2] = -m[0][2];
+		m[1][2] = -m[1][2];
+		m[2][2] = -m[2][2];
+		//ROS_INFO_STREAM("New value: " << m);
+	}*/
 
-    // Make sure points aren't the same so things are well-defined
-    if((q2-q1).length() < 1e-3)
-      return -1;
+	// Invert and return
+	//retmat = m.inverse();
+	//cerr << "Frame is " << retmat << endl;
 
-    // (inverse) matrix with the given properties
-    osg::Vec3 v = (q2-q1);
-    v.normalize();
-    //std::cout << "v1: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-    osg::Vec3 v2 = (q3-q4);
-    v2.normalize();
-    //std::cout << "v2: " << v2[0] << " " << v2[1] << " " << v2[2] << std::endl;
-    //v = (v + v2)/2.0;
+	double kquat[4];
+	ToQuaternion(m, kquat);
 
-/*	std::cout << "------------" << alvarData->GetId() << std::endl;
-	std::cout << q1[0]<< " " << q1[1] << " " << q1[2] << std::endl;
-	std::cout << q2[0]<< " " << q2[1] << " " << q2[2] << std::endl;
-	std::cout << q3[0]<< " " << q3[1] << " " << q3[2] << std::endl;
-	std::cout << q4[0]<< " " << q4[1] << " " << q4[2] << std::endl;
-	std::cout << "------------" << std::endl;	*/
+	osg::Quat quat;
+	quat[0] = kquat[1];
+	quat[1] = kquat[2];
+	quat[2] = kquat[3];
+	quat[3] = kquat[0];
 
+	kinQuat = quat*osg::Quat(osg::DegreesToRadians(180.0), osg::Vec3(0,0,1));
+	kinQuat[3] = -kinQuat[3];
 
-    osg::Vec3 n(a, b, c);
-    osg::Vec3 w = -v ^ n;
+	// set the kinectQuat
+	kinectQuat[0] = kinQuat[0];
+	kinectQuat[1] = kinQuat[1];
+	kinectQuat[2] = kinQuat[2];
+	kinectQuat[3] = kinQuat[3];
 
-    // initialize rotation matrix
-    double  m[3][3] = {
-	    {v[0], v[1], v[2]},
-	    {w[0], w[1], w[2]},
-	    {n[0], n[1], n[2]}
-    };
+	//transf->setAttitude(kinQuat);
 
-    // Possibly flip things based on third point
-    osg::Vec3 diff = (q4-q3);
-    diff.normalize();
-
-    //xTrans->setPosition(v*5.0);
-    //yTrans->setPosition(w*5.0);
-    //zTrans->setPosition(n*5.0);
-
-
-    //std::cout << "New Normal: " << n[0] << " " << n[1] << " " << n[2] << std::endl;
-
-    //ROS_INFO_STREAM("w = " << w << " and d = " << diff);
-    /*if (w * diff < 0)
-      {
-	//ROS_INFO_STREAM("Flipping normal based on p3. Current value: " << m);
-	m[0][1] = -m[0][1];
-	m[1][1] = -m[1][1];
-	m[2][1] = -m[2][1];
-
-	m[0][2] = -m[0][2];
-	m[1][2] = -m[1][2];
-	m[2][2] = -m[2][2];
-	//ROS_INFO_STREAM("New value: " << m);
-      }*/
-
-    // Invert and return
-    //retmat = m.inverse();
-    //cerr << "Frame is " << retmat << endl;
-
-    double kquat[4];
-    ToQuaternion(m, kquat);
-
-    osg::Quat quat;
-    quat[0] = kquat[1];
-    quat[1] = kquat[2];
-    quat[2] = kquat[3];
-    quat[3] = kquat[0];
-
-    kinQuat = quat*osg::Quat(osg::DegreesToRadians(180.0), osg::Vec3(0,0,1));
-    kinQuat[3] = -kinQuat[3];
-
-    // set the kinectQuat
-    kinectQuat[0] = kinQuat[0];
-    kinectQuat[1] = kinQuat[1];
-    kinectQuat[2] = kinQuat[2];
-    kinectQuat[3] = kinQuat[3];
-    
-    //transf->setAttitude(kinQuat);
-
-    return 0;
+	return 0;
 }
 
 pcl::ModelCoefficients::Ptr  KinectMarker::fitPlane2(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
@@ -670,7 +670,7 @@ void KinectMarker::FitPlane()
 	normal.z =  coeff[2];
 
 	//if(coeff[0] == coeff[0])
-		std::cout << "n: " << coeff[0] << " " << coeff[1] << " " << coeff[2] << std::endl;
+	std::cout << "n: " << coeff[0] << " " << coeff[1] << " " << coeff[2] << std::endl;
 
 	// store the 3d positions of the marker
 	for (size_t i = projected.points.size()-4; i < projected.points.size (); ++i)

@@ -41,8 +41,6 @@
 using namespace cv;
 using namespace std;
 
-const double fudgeParam = 0.0;
-
 static inline size_t msg_size( size_t n ) {
 	return sizeof(struct sendMarker) - sizeof(struct tf_qv) + (n) * sizeof(struct tf_qv);
 }
@@ -55,13 +53,11 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR(CamMode mode, char* calibFileName, double markerSize)
+KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
 {
 	int imageMode;
 	camMode = mode;
-	
-	// set the marker size
-	marker_size = markerSize;
+	params  = p;
 	
 	// using the kinect
 	if(camMode == KINECT)
@@ -73,7 +69,7 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, double markerSize)
 	}
 	else
 	{
-		image = cvCreateImage(cvSize(1920,1080), IPL_DEPTH_8U, 3);
+		image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
 		
 		// using the web cam
 		if (camMode == NORMAL)
@@ -90,7 +86,8 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, double markerSize)
 		// using ach
 		else if (camMode == ACH)
 		{
-			rec.init("video1", 1920, 1080);
+			const char* tmpChannel = params.getAchInputChannel().c_str();
+			rec.init(tmpChannel, params.getResX(), params.getResY());
 		}
 	}
 	
@@ -101,8 +98,8 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, double markerSize)
 	
 	else
 	{
-		capture.set(CV_CAP_PROP_FRAME_WIDTH, 1920);
-		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 1080);
+		capture.set(CV_CAP_PROP_FRAME_WIDTH, params.getResX());
+		capture.set(CV_CAP_PROP_FRAME_HEIGHT, params.getResY());
 	}
 
 	// create the markers to be tracked
@@ -115,6 +112,18 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, double markerSize)
 	// finished initialization
 	init = true;
 	calib = calibFileName;
+	
+	// set marker size
+	marker_detector.SetMarkerSize(params.getMarkerSize(), 5, 2);
+	
+	// set the size of individual, aka bigger, markers
+	std::map<int, double> isizes = params.getIndivMarkerSize();
+	
+	for(std::map<int, double>::iterator iter = isizes.begin(); iter != isizes.end(); iter++)
+	{
+		// for marker ids larger than 255, set the content resolution accordingly
+		marker_detector.SetMarkerSizeForId(iter->first, iter->second);
+	}
 }
 
 void KinectAR::DetectMarkers(bool print)
@@ -139,7 +148,6 @@ void KinectAR::DetectMarkers(bool print)
 	}
 
 	// for marker ids larger than 255, set the content resolution accordingly
-	marker_detector.SetMarkerSize(marker_size, 5, 2);
 	marker_detector.Detect(image, &cam, false, false);
 
 	//std::cout << image->imageData.size << std::endl;
@@ -147,7 +155,8 @@ void KinectAR::DetectMarkers(bool print)
 	{
 		kinectMarkers[i].Update(&(*(marker_detector.markers))[i]);
 		
-		//int id = (*(marker_detector.markers))[i].GetId();
+		int id = (*(marker_detector.markers))[i].GetId();
+		
 		//SNS_LOG( LOG_ERR, "Detected Num: %d\n", id );
 		
 		// print out the current pose
@@ -190,11 +199,11 @@ void KinectAR::SendMsg(size_t n)
 	struct timespec now = sns_now();
 
 	sns_msg_wt_tf *msg;
-	if( KINECT == camMode ) {
-		msg = sns_msg_wt_tf_local_alloc(n*2);
-	} else {
-		msg = sns_msg_wt_tf_local_alloc(n);
-	}
+	//if( KINECT == camMode ) {
+	//	msg = sns_msg_wt_tf_local_alloc(n*2);
+	//} else {
+	msg = sns_msg_wt_tf_local_alloc(n);
+	//}
 	sns_msg_set_time( &msg->header, &now, 0 );
 
 	// loop over all visibile markers
@@ -233,7 +242,7 @@ void KinectAR::SendMsg(size_t n)
 
 		// 2.) set the data of Kinect
 		// set the positions
-		if(camMode == KINECT)
+		/*if(camMode == KINECT)
 		{
 			assert( n*2 == msg->header.n );
 			sns_wt_tf *wt_tfK = &(msg->wt_tf[id+n]);
@@ -251,9 +260,9 @@ void KinectAR::SendMsg(size_t n)
 			
 			// set weight of marker
 			wt_tfK->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
-		} else {
-				assert( n == msg->header.n );
-		}
+		} else {*/
+		assert( n == msg->header.n );
+		//}
 	}
 
 	// send out the message via ACH

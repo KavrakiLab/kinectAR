@@ -34,6 +34,7 @@
 #include <MarkerDetector.h>
 #include <GlutViewer.h>
 
+#include "cparams.h"
 #include "kinectMarker.h"
 #include "imageReceiver.h"
 
@@ -61,7 +62,7 @@ class KinectAR
 {
 public:
 	// constructor
-  KinectAR(CamMode mode, char* calibFile, double markerSize);
+  KinectAR(CamMode mode, char* calibFile, CParams p);
 	
 	void UpdateScene(bool draw);
 	void Keyboard(int key, int x, int y);
@@ -103,5 +104,6 @@ public:
 	ImageReceiver rec;
 	CamMode camMode;
 	char* calib;
+	CParams params;
 	
 };

@@ -72,6 +72,8 @@
 #include <iostream>
 #include <sns.h>
 
+#include "cparams.h"
+
 using namespace cv;
 using namespace std;
 
@@ -146,9 +148,11 @@ int main(int argc, char **argv)
 			"Report bugs to <hbenamor@cc.gatech.edu>" );
 		}
 	}
+	// initialize parameters
+	CParams p("params.txt");
 	
 	// create a camera processing module
-	KinectAR camera(mode, "calib.xml", 2.8);
+	KinectAR camera(mode, "calib.xml", p);
 
 	// channel name
 	camera.OpenChannel(opt_channel);
@@ -200,6 +204,7 @@ int main(int argc, char **argv)
 		
 		// detect the marker in the scene
 		camera.DetectMarkers(true);
+		
 		
 		// do kinect processing
 		if(mode == KINECT)
