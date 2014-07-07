@@ -17,7 +17,7 @@ class ImageReceiver
 {
 public:
 	ImageReceiver() {initialized = false;}
-	void init( char* channelName, int resX, int resY )
+	void init(const char* channelName, int resX, int resY )
 	{
 
 	    sns_init();
