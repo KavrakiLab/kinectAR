@@ -82,7 +82,8 @@ bool useKinect   = false;
 bool useGraphics = true;
 
 const char *opt_channel = "markers";
-char *inp_type = "normal";
+char *param_file        = NULL;
+char *inp_type          = "normal";
 
 /**
  * Creates a scene graph for 3D visualization
@@ -120,7 +121,7 @@ osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
 int main(int argc, char **argv)
 {
 	sns_init();
-	for( int c; -1 != (c = getopt(argc, argv, "i:gc:?" SNS_OPTSTRING)); ) {
+	for( int c; -1 != (c = getopt(argc, argv, "i:p:gc:?" SNS_OPTSTRING)); ) {
 		switch(c) {
 			SNS_OPTCASES;
 		case 'i':
@@ -135,6 +136,9 @@ int main(int argc, char **argv)
 		case 'c':
 			opt_channel = optarg;
 			break;
+		case 'p':
+			param_file = optarg;
+			break;
 		case '?':   /* help     */
 		default:
 			puts( "Usage: detect_marker -c channel -i (normal/kinect/ach)\n"
@@ -143,13 +147,20 @@ int main(int argc, char **argv)
 			"Options:\n"
 			"  -c CHANNEL,                  Set output Ach channel\n"
 			"  -i INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
+			"  -p file,               	 Set the parameter file from which to read additional params\n"
 			"  -?,                          Give program help list\n"
 			"\n"
 			"Report bugs to <hbenamor@cc.gatech.edu>" );
 		}
 	}
 	// initialize parameters
-	CParams p("params.txt");
+	CParams p;
+	
+	// load from file
+	if(param_file != NULL)
+	{
+		p = CParams(param_file);
+	}
 	
 	// create a camera processing module
 	KinectAR camera(mode, "calib.xml", p);
