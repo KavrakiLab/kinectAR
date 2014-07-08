@@ -8,38 +8,24 @@
 #include <sns.h>
 #include "imageReceiver.h"
 
-void ImageReceiver::init(const char* channelName, int resX, int resY )
+ImageReceiver::ImageReceiver(const char *channelName)
 {
-
-	sns_init();
-	int r = ach_open(&chan, channelName, NULL);
-	assert( ACH_OK == r );
-
-
-	iWidth  = resX;
-	iHeight = resY;
-
-	size = sizeof(frame) + sizeof(frame->points[0])*(iWidth*iHeight*3);
-	frame = (frame_t*) (malloc(size));
-	frame->width = iWidth;
-	frame->height = iHeight;
-	initialized = true;
+	sns_chan_open(&chan, channelName, NULL);
 }
 
 Mat ImageReceiver::receiveImage()
 {
-	Mat image(frame->width, frame->height, CV_8UC3);
-	if(!initialized) return image;
-
 	size_t fs;
-	//std::cout << "Pull message .." << std::endl;
-	ach_status_t r = ach_get( &chan, frame, size, &fs,
-				  NULL, (ach_get_opts_t)(ACH_O_LAST) );
+	frame_t *frame;
+	ach_status_t r = sns_msg_local_get( &chan, (void**)&frame, &fs,
+					    NULL, (ach_get_opts_t)(ACH_O_LAST | ACH_O_WAIT) );
 
-	//fprintf(stderr, "result: %s\n", ach_result_to_string(r));
-	//assert( ACH_OK == r || ACH_MISSED_FRAME == r);
+	assert( ACH_OK == r || ACH_MISSED_FRAME == r);
 
+	Mat image(frame->width, frame->height, CV_8UC3);
 	int n = frame->width * frame->height;
+
+	// TODO: check than frame size is reasonable
 
 	//assert( n < fs / sizeof(frame->points[0][0]) );
 	//std::cout << frame->width << " " << frame->height << std::endl;
@@ -60,5 +46,6 @@ Mat ImageReceiver::receiveImage()
 			i++;
 		}
 	}
+
 	return image;
 }

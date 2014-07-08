@@ -53,15 +53,14 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_cam, const char *chan_name_tf)
+KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_cam, const char *chan_name_tf) :
+	rec(chan_name_cam)
 {
 	int imageMode;
 	camMode = ACH;
 	params  = p;
 
 	image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
-
-	rec.init(chan_name_cam, params.getResX(), params.getResY());
 
 	sns_chan_open( &channel_tf, chan_name_tf, NULL );
 

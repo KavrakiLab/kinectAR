@@ -18,13 +18,9 @@ typedef struct {
 class ImageReceiver
 {
 public:
-	ImageReceiver() {initialized = false;}
-	void init(const char* channelName, int resX, int resY );
+	ImageReceiver(const char *channelName);
 	Mat receiveImage();
 
 private:
-	int size, iHeight, iWidth;
 	ach_channel_t chan;
-	frame_t* frame;
-	bool initialized;
 };
