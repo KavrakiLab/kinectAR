@@ -79,7 +79,7 @@ using namespace std;
 
 CamMode mode;
 bool useKinect   = false;
-bool useGraphics = true;
+bool useGraphics = false;
 
 const char *opt_channel = "markers";
 char *param_file        = NULL;
@@ -94,7 +94,7 @@ osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
 	osg::Group *root = new osg::Group;
 
 	// add the table
-	osg::Geode* table 	 = new osg::Geode;
+	osg::Geode* table	 = new osg::Geode;
 	osg::ShapeDrawable* shape  = new osg::ShapeDrawable(new osg::Box(osg::Vec3(0.0f,0.0f,0.0f),80.0f,40.0f,0.05f));
 	osg::PositionAttitudeTransform* transf = new osg::PositionAttitudeTransform;
 
@@ -108,10 +108,10 @@ osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
 
 	// set the trackball manipulator
 	viewer->setCameraManipulator(new osgGA::TrackballManipulator());
-	
+
 	// only initialize Scenegraph if we actually want to display something
 	viewer->realize();
-	
+
 	return root;
 }
 
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 			"Options:\n"
 			"  -c CHANNEL,                  Set output Ach channel\n"
 			"  -i INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
-			"  -p file,               	 Set the parameter file from which to read additional params\n"
+			"  -p file,                     Set the parameter file from which to read additional params\n"
 			"  -?,                          Give program help list\n"
 			"\n"
 			"Report bugs to <hbenamor@cc.gatech.edu>" );
@@ -155,13 +155,13 @@ int main(int argc, char **argv)
 	}
 	// initialize parameters
 	CParams p;
-	
+
 	// load from file
 	if(param_file != NULL)
 	{
 		p = CParams(param_file);
 	}
-	
+
 	// create a camera processing module
 	KinectAR camera(mode, "calib.xml", p);
 
@@ -178,17 +178,17 @@ int main(int argc, char **argv)
 	args[3]= "100";
 	args[4]= "400";
 	args[5]= "400";
-	
+
 	osg::ArgumentParser arguments(&numArgs, args);
 	osgViewer::Viewer* viewer;
 	osg::Group* root;
-	
+
 	// add to the sceneGraph
 	// only add to scene graph if we are visualizing things
 	if(useGraphics)
 	{
 		viewer = new osgViewer::Viewer(arguments);
-		
+
 		root = createSceneGraph(viewer);
 		for(int i = 0; i < 32; i++)
 		{
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 			(camera.kinectMarkers[i]).DrawCoordinateSys();
 		}
 	}
-	
+
 	// draw image
 	while(!sns_cx.shutdown)
 	{
@@ -209,32 +209,32 @@ int main(int argc, char **argv)
 				return -1;
 			}
 		}
-		
+
 		// process video image and draw scene
 		camera.UpdateScene(false);
-		
+
 		// detect the marker in the scene
 		camera.DetectMarkers(true);
-		
-		
+
+
 		// do kinect processing
 		if(mode == KINECT)
 		{
 			camera.CreatePointCloud();
-			
+
 		}
 		// send the data
 		camera.SendMsg(32);
 
 		// fire off the cull and draw traversals of the scene.
-		if(useGraphics) 
+		if(useGraphics)
 			viewer->frame();
 
 		// process keyboard input
 		if( waitKey( 30 ) >= 0 )
 			exit(0);
 	}
-	
+
 	aa_mem_region_local_release();
 	return 0;
 }

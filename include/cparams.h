@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
 #ifndef CPARAMS_H
 #define CPARAMS_H
 
@@ -17,20 +18,20 @@ public:
 	{
 		// set default params
 	}
-	
+
 	// load params from file
 	CParams(const char* filename)
 	{
 		loadParams(filename);
 	}
-	
+
 	// set resolution
 	void setResolution(int x, int y)
 	{
 		resX = x;
 		resY = y;
 	}
-	
+
 	// set the ach channel for publishing marker positions
 	void setAchOutputChannel(std::string channel)
 	{
@@ -42,7 +43,7 @@ public:
 	{
 		achInputChannel = channel;
 	}
-	
+
 	// get the ach channel for publishing marker positions
 	std::string getAchOutputChannel()
 	{
@@ -54,19 +55,19 @@ public:
 	{
 		return achInputChannel;
 	}
-	
+
 	// return the width of the image
 	int getResX()
 	{
 		return resX;
 	}
-	
+
 	// return the height of the image
 	int getResY()
 	{
 		return resY;
 	}
-	
+
 	// set the size of a marker
 	void setMarkerSize(double s)
 	{
@@ -78,14 +79,14 @@ public:
 	{
 		return markerSize;
 	}
-	
+
 	// get the marker size of individual markers
 	// that are bigger than the rest
 	std::map<int, double> getIndivMarkerSize()
 	{
 		return  indivMarkerSizes;
 	}
-	
+
 	// load parameters
 	void loadParams(const char* file)
 	{
@@ -96,14 +97,14 @@ public:
 			// resolution
 			input >> resX;
 			input >> resY;
-			
+
 			// input/output channel
 			input >> achInputChannel;
 			input >> achOutputChannel;
-			
+
 			// overall marker size
 			input >> markerSize;
-			
+
 			int id;
 			double size;
 			// individual marker sizes
@@ -112,10 +113,10 @@ public:
 				// get id of marker
 				input >> id;
 				input >> size;
-				
+
 				indivMarkerSizes[id] = size;
 			}
-			
+
 			input.close();
 		}
 	}
@@ -127,4 +128,5 @@ protected:
 	std::string achOutputChannel;
 	std::string achInputChannel;
 };
+
 #endif

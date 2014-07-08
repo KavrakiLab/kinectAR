@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
 #ifndef _GLUTVIEWER_H_
 #define _GLUTVIEWER_H_
 
@@ -22,10 +23,10 @@ public:
 
 	void SetScale(double _scale);
 	void SetColor(double _r=1, double _g=1, double _b=1);
-	
+
 	virtual void Draw();
 	virtual void DrawAxis(double scale, double color[3]);
-	
+
 	void SetGLMatTraQuat(double *tra, double *quat, bool flip=false);
 	void SetGLMatTraRod(double *tra, double *rod);
 

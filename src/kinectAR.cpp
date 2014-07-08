@@ -58,7 +58,7 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
 	int imageMode;
 	camMode = mode;
 	params  = p;
-	
+
 	// using the kinect
 	if(camMode == KINECT)
 	{
@@ -70,12 +70,12 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
 	else
 	{
 		image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
-		
+
 		// using the web cam
 		if (camMode == NORMAL)
 		{
 			capture.open( 0 );
-			
+
 			// did not find any camera
 			if( !capture.isOpened() )
 			{
@@ -90,12 +90,12 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
 			rec.init(tmpChannel, params.getResX(), params.getResY());
 		}
 	}
-	
+
 	bool modeRes=false;
-		
+
 	if(camMode == KINECT)
 		modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
-	
+
 	else
 	{
 		capture.set(CV_CAP_PROP_FRAME_WIDTH, params.getResX());
@@ -108,17 +108,17 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
 		// create a bunch of markers
 		kinectMarkers.push_back(KinectMarker());
 	}
-	
+
 	// finished initialization
 	init = true;
 	calib = calibFileName;
-	
+
 	// set marker size
 	marker_detector.SetMarkerSize(params.getMarkerSize(), 5, 2);
-	
+
 	// set the size of individual, aka bigger, markers
 	std::map<int, double> isizes = params.getIndivMarkerSize();
-	
+
 	for(std::map<int, double>::iterator iter = isizes.begin(); iter != isizes.end(); iter++)
 	{
 		// for marker ids larger than 255, set the content resolution accordingly
@@ -154,11 +154,11 @@ void KinectAR::DetectMarkers(bool print)
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
 	{
 		kinectMarkers[i].Update(&(*(marker_detector.markers))[i]);
-		
+
 		int id = (*(marker_detector.markers))[i].GetId();
-		
+
 		//SNS_LOG( LOG_ERR, "Detected Num: %d\n", id );
-		
+
 		// print out the current pose
 		if(print) kinectMarkers[i].PrintAlvarPose();
 	}
@@ -181,7 +181,7 @@ void KinectAR::UpdateScene(bool draw)
 	{
 		capture >> bgrImage;
 	}
-	
+
 	// only draw if corresponding flag is set
 	if(draw)
 		imshow( "rgb image", bgrImage );
@@ -211,7 +211,7 @@ void KinectAR::SendMsg(size_t n)
 	double tmp[4];
 	CvMat mat = cvMat(4, 1, CV_64F, tmp);
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
-	{		
+	{
 		int id = (*(marker_detector.markers))[i].GetId();
 		if( id >= n ) {
 			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
@@ -228,7 +228,7 @@ void KinectAR::SendMsg(size_t n)
 
 		// set visibility
 		wt_tfA->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
-		
+
 		// 1.) set data of ALVAR
 		// set the positions
 		for(int j = 0; j < 3; j++)
@@ -257,7 +257,7 @@ void KinectAR::SendMsg(size_t n)
 			wt_tfK->tf.r.x = kquat[0];
 			wt_tfK->tf.r.y = kquat[1];
 			wt_tfK->tf.r.z = kquat[2];
-			
+
 			// set weight of marker
 			wt_tfK->weight = 1.0 - (*(marker_detector.markers))[i].GetError();
 		} else {*/

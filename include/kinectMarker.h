@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@
 #include <MarkerDetector.h>
 #include <GlutViewer.h>
 
-class KinectMarker 
+class KinectMarker
 {
 public:
 	// constructor
@@ -51,38 +52,38 @@ public:
 
 	// Update the marker data
 	void Update(alvar::MarkerData* newData);
-	
+
 	// sort the corner points
 	void SortCornerPoints();
-	
+
 	// returns sorted corner points
 	inline std::vector<alvar::PointDouble> GetCornerPoints() {return sortedMarkerCornersImg;}
-	
+
 	// set the point cloud corresponding to this marker
 	inline void SetPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pcl) {pcloud = pcl;}
-	
+
 	// calculates the normal vector
 	void GetNormalVector();
-	
+
 	// print out the alvar pose
 	void PrintAlvarPose();
-	
+
 	// print out the alvar pose
 	void PrintKinectPose();
-	
+
 	// to quaternion conversion
 	void ToQuaternion(double m[3][3], double* quat);
 
 	// calculate the point cloud
 	void CalculatePointCloud(cv::Mat depthMap);
-	
+
 	inline double* GetKinectQuat() {return kinectQuat;}
 	inline Eigen::Vector3f GetKinectPos() {return kinectPos;}
-	
+
 	// added to scenegraph
 	void AddToSceneGraph(osg::Group *root);
 	void DrawCoordinateSys();
-	
+
 public:
 	// fit plane into a point cloud
 	void FitPlane();
@@ -91,12 +92,12 @@ public:
 	osg::Vec3 project(pcl::PointXYZ p, const double a, const double b, const double c, const double d);
 	int extractFrame (const pcl::ModelCoefficients& coeffs, const pcl::PointXYZ p1, const pcl::PointXYZ p2, const pcl::PointXYZ p3, const pcl::PointXYZ p4);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr CalculateCorner3D(cv::Mat depthMap);
-	
+
 	// turn a point into a cv::Mat
 	cv::Mat PointToMat(pcl::PointXYZRGBA p);
 	cv::Mat PointToMat(pcl::PointXYZ p);
-	
-	std::vector<alvar::PointDouble> markerPointsImg;	
+
+	std::vector<alvar::PointDouble> markerPointsImg;
 	std::vector<alvar::PointDouble> markerCornersImg;
 	std::vector<alvar::PointDouble> sortedMarkerCornersImg;
 	std::vector<alvar::PointDouble> markerCornersCentered;
@@ -107,32 +108,32 @@ public:
 	alvar::PointDouble position;
 	pcl::PointXYZ normal;
 	CvMat orientation;
-	
+
 	// current point cloud of all marker points
 	pcl::PointCloud<pcl::PointXYZ>::Ptr pcloud;
 	std::vector<pcl::PointXYZRGBA> markerCorners3D;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr scorner3D;
-	
+
 	// the current alvar pose
 	alvar::Pose alvarPose;
-	
+
 	// the current kinect quat
 	Eigen::Vector3f kinectPos;
 	double kinectQuat[4];
 	osg::Quat kinQuat;
-	
+
 	bool visible = false;
-	
+
 	// OSG stuff
 	osg::PositionAttitudeTransform* transf;
 
 	osg::PositionAttitudeTransform* xTrans;
 	osg::PositionAttitudeTransform* yTrans;
 	osg::PositionAttitudeTransform* zTrans;
-	
+
 	// dann fgen wir eine box als geometrie ein
-	osg::Geode* geometry; 
-	osg::ShapeDrawable* shape; 
-	
+	osg::Geode* geometry;
+	osg::ShapeDrawable* shape;
+
 	bool useOSG;
 };

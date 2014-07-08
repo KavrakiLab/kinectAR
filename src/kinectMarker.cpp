@@ -123,7 +123,7 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 		quat[1] = alvar_quat[2];
 		quat[2] = alvar_quat[3];
 		quat[3] = alvar_quat[0];
-		
+
 		transf->setPosition( pos );
 		transf->setAttitude( quat );
 

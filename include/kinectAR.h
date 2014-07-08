@@ -1,3 +1,5 @@
+/* -*- mode: C++; c-basic-offset: 8; indent-tabs-mode: t;  -*- */
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,52 +60,52 @@ struct sendMarker
 
 enum CamMode { NORMAL, ACH, KINECT};
 
-class KinectAR 
+class KinectAR
 {
 public:
 	// constructor
   KinectAR(CamMode mode, char* calibFile, CParams p);
-	
+
 	void UpdateScene(bool draw);
 	void Keyboard(int key, int x, int y);
-	
+
 	void DetectMarkers(bool print);
 	void CreatePointCloud();
 	void OpenChannel(const char* channelName);
 	void UpdateMarkerInfo();
-	
+
 	// ACH send message
 	void SendMsg(size_t n);
-	
+
 public:
 	pthread_t freenect_thread;
 	volatile int die;
 	uint16_t* depth;
-	
+
 	// for AR
 	bool init=true;
 	double marker_size;
 	bool useKinect = true;
-	
+
 	alvar::Camera cam;
 	//Drawable d[32];
 	alvar::MarkerDetector<alvar::MarkerData> marker_detector;
-	
+
 	IplImage* image;
-	
+
 	// for ach
 	ach_channel_t   channel;
-	
+
 	cv::Mat rgb;
-	cv::Mat show; 
+	cv::Mat show;
 	cv::VideoCapture capture;
 	cv::Mat depthMap;
 	cv::Mat bgrImage;
-	
+
 	std::vector<KinectMarker> kinectMarkers;
 	ImageReceiver rec;
 	CamMode camMode;
 	char* calib;
 	CParams params;
-	
+
 };
