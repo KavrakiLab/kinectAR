@@ -422,8 +422,9 @@ void KinectMarker::PrintAlvarPose()
 	alvarPose.GetQuaternion(&q);
 	double* alvar_quat = (double*)q.data.ptr;
 
-	std::cout << "Alvar (Pos): " << alvarPose.translation[0] << " " << alvarPose.translation[1] << " " << alvarPose.translation[2] << std::endl;
-	std::cout << "Alvar (Quat): " << alvar_quat[0] << " " << alvar_quat[1] << " " << alvar_quat[2] << " " << alvar_quat[3] << std::endl;
+	SNS_LOG( LOG_DEBUG,  "Alvar\t[ %f\t%f\t%f\t%f\t|\t%f\t%f\t%f ]\n",
+		 alvar_quat[1], alvar_quat[2], alvar_quat[3], alvar_quat[0],
+		 alvarPose.translation[0] , alvarPose.translation[1] , alvarPose.translation[2] );
 }
 
 void KinectMarker::ToQuaternion(double  m[3][3], double* quat)

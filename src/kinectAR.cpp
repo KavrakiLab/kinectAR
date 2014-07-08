@@ -326,17 +326,16 @@ void KinectAR::SendMsg(size_t n)
 		for(int i = 0; i < marker_detector.markers->size(); i++)
 		{
 			int currId = (*(marker_detector.markers))[i].GetId();
-			std::cout << "[ROT]: "
-				  << msg->wt_tf[currId].tf.r.x << " "
-				  << msg->wt_tf[currId].tf.r.y << " "
-				  << msg->wt_tf[currId].tf.r.z << " "
-				  << msg->wt_tf[currId].tf.r.w << " "
-				  << std::endl;
-			std::cout << "[POS]: "
-				  << msg->wt_tf[currId].tf.v.x << " "
-				  << msg->wt_tf[currId].tf.v.y << " "
-				  << msg->wt_tf[currId].tf.v.z << " "
-				  << std::endl;
+
+			SNS_LOG( LOG_DEBUG,  "MSG[%d]\t[ %f\t%f\t%f\t%f\t|\t%f\t%f\t%f ]\n",
+				 currId,
+				 msg->wt_tf[currId].tf.r.x,
+				 msg->wt_tf[currId].tf.r.y,
+				 msg->wt_tf[currId].tf.r.z,
+				 msg->wt_tf[currId].tf.r.w,
+				 msg->wt_tf[currId].tf.v.x,
+				 msg->wt_tf[currId].tf.v.y,
+				 msg->wt_tf[currId].tf.v.z );
 		}
 	}
 }
