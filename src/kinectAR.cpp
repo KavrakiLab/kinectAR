@@ -54,13 +54,12 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
 KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_cam, const char *chan_name_tf) :
-	rec(chan_name_cam)
+	rec(chan_name_cam),
+	image_ipl(NULL)
 {
 	int imageMode;
 	camMode = ACH;
 	params  = p;
-
-	image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
 
 	sns_chan_open( &channel_tf, chan_name_tf, NULL );
 
@@ -169,27 +168,24 @@ KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_c
 
 void KinectAR::DetectMarkers(bool print)
 {
-	// get the current video image
-	image->imageData = (char *) bgrImage.data;
-
 	if (init)
 	{
 		init = false;
 		if(camMode == KINECT)
 		{
 			// no calibration needed in this case
-			cam.SetRes(image->width, image->height);
+			cam.SetRes(image_ipl->width, image_ipl->height);
 		}
 		else
 		{
 			// load calibration data
-			cam.SetCalib(calib, image->width, image->height);
+			cam.SetCalib(calib, image_ipl->width, image_ipl->height);
 			std::cout<<" [Loading Camera Calibration Successful!]"<< std::endl;
 		}
 	}
 
 	// for marker ids larger than 255, set the content resolution accordingly
-	marker_detector.Detect(image, &cam, false, false);
+	marker_detector.Detect(image_ipl, &cam, false, false);
 
 	//std::cout << image->imageData.size << std::endl;
 	for (size_t i=0; i<marker_detector.markers->size(); i++)
@@ -222,6 +218,19 @@ void KinectAR::UpdateScene(bool draw)
 	{
 		capture >> bgrImage;
 	}
+
+	if( image_ipl ) {
+		SNS_REQUIRE( bgrImage.cols == image_ipl->height &&
+			     bgrImage.rows == image_ipl->width,
+			     "Image size mismatch: received (%lu,%lu) but wanted (%d,%d)\n",
+			     bgrImage.rows, bgrImage.cols,
+			     image_ipl->width, image_ipl->height );
+	} else {
+		image_ipl = cvCreateImage(cvSize(bgrImage.rows, bgrImage.cols), IPL_DEPTH_8U, 3);
+	}
+	image_ipl->imageData = (char *) bgrImage.data;
+
+
 
 	// only draw if corresponding flag is set
 	if(draw)

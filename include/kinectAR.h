@@ -92,7 +92,7 @@ public:
 	//Drawable d[32];
 	alvar::MarkerDetector<alvar::MarkerData> marker_detector;
 
-	IplImage* image;
+	IplImage* image_ipl;
 
 	// for ach
 	ach_channel_t   channel_tf;
