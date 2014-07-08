@@ -174,9 +174,6 @@ int main(int argc, char **argv)
 	// create a camera processing module
 	KinectAR camera("calib.xml", p, opt_chan_cam, opt_chan_tf);
 
-	// channel name
-	camera.OpenChannel(opt_chan_cam, opt_chan_tf);
-
 	// create a scene graph
 	// use an ArgumentParser object to manage the program arguments.
 	int numArgs = 6;

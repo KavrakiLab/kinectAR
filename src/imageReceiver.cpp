@@ -13,7 +13,7 @@ ImageReceiver::ImageReceiver(const char *channelName)
 	sns_chan_open(&chan, channelName, NULL);
 }
 
-Mat ImageReceiver::receiveImage()
+Mat *ImageReceiver::receiveImage(Mat *m)
 {
 	size_t fs;
 	frame_t *frame;
@@ -22,7 +22,13 @@ Mat ImageReceiver::receiveImage()
 
 	assert( ACH_OK == r || ACH_MISSED_FRAME == r);
 
-	Mat image(frame->width, frame->height, CV_8UC3);
+	if( m ) {
+		SNS_REQUIRE( m->rows == frame->width &&
+			     m->cols == frame->height,
+			     "Size mismatch on receiving frame as matrix\n" );
+	} else  {
+		m = new Mat(frame->width, frame->height, CV_8UC3);
+	}
 	int n = frame->width * frame->height;
 
 	// TODO: check than frame size is reasonable
@@ -40,12 +46,12 @@ Mat ImageReceiver::receiveImage()
 			int b = (int)frame->points[i][2];
 			//std::cout << r << " " << g << " " << b << std::endl;
 			assert(i < frame->width*frame->height);
-			image.at<Vec3b>(x,y)[0] = r;
-			image.at<Vec3b>(x,y)[1] = g;
-			image.at<Vec3b>(x,y)[2] = b;
+			m->at<Vec3b>(x,y)[0] = r;
+			m->at<Vec3b>(x,y)[1] = g;
+			m->at<Vec3b>(x,y)[2] = b;
 			i++;
 		}
 	}
 
-	return image;
+	return m;
 }

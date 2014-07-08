@@ -72,7 +72,6 @@ public:
 
 	void DetectMarkers(bool print);
 	void CreatePointCloud();
-	void OpenChannel(const char* chan_cam, const char *chan_tf);
 	void UpdateMarkerInfo();
 
 	// ACH send message
@@ -101,7 +100,7 @@ public:
 	cv::Mat show;
 	cv::VideoCapture capture;
 	cv::Mat depthMap;
-	cv::Mat bgrImage;
+	cv::Mat *image_bgr;
 
 	std::vector<KinectMarker> kinectMarkers;
 	ImageReceiver rec;

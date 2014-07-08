@@ -55,7 +55,8 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_cam, const char *chan_name_tf) :
 	rec(chan_name_cam),
-	image_ipl(NULL)
+	image_ipl(NULL),
+	image_bgr(NULL)
 {
 	int imageMode;
 	camMode = ACH;
@@ -206,40 +207,35 @@ void KinectAR::UpdateScene(bool draw)
 	// get image from camera
 	if(camMode == KINECT)
 	{
-		capture.retrieve( bgrImage, CV_CAP_OPENNI_BGR_IMAGE );
-		capture.retrieve( depthMap, CV_CAP_OPENNI_DEPTH_MAP );
+		capture.retrieve( *image_bgr, CV_CAP_OPENNI_BGR_IMAGE );
+		capture.retrieve( *image_bgr, CV_CAP_OPENNI_DEPTH_MAP );
 	}
 	else if (camMode == ACH)
 	{
 		// streaming of pictures
-		bgrImage = rec.receiveImage();
+		image_bgr = rec.receiveImage(image_bgr);
 	}
 	else
 	{
-		capture >> bgrImage;
+		capture >> (*image_bgr);
 	}
 
 	if( image_ipl ) {
-		SNS_REQUIRE( bgrImage.cols == image_ipl->height &&
-			     bgrImage.rows == image_ipl->width,
+		SNS_REQUIRE( image_bgr->cols == image_ipl->height &&
+			     image_bgr->rows == image_ipl->width,
 			     "Image size mismatch: received (%lu,%lu) but wanted (%d,%d)\n",
-			     bgrImage.rows, bgrImage.cols,
+			     image_bgr->rows, image_bgr->cols,
 			     image_ipl->width, image_ipl->height );
 	} else {
-		image_ipl = cvCreateImage(cvSize(bgrImage.rows, bgrImage.cols), IPL_DEPTH_8U, 3);
+		image_ipl = cvCreateImage(cvSize(image_bgr->rows, image_bgr->cols), IPL_DEPTH_8U, 3);
 	}
-	image_ipl->imageData = (char *) bgrImage.data;
+	image_ipl->imageData = (char *) image_bgr->data;
 
 
 
 	// only draw if corresponding flag is set
 	if(draw)
-		imshow( "rgb image", bgrImage );
-}
-
-void KinectAR::OpenChannel(const char* chan_name_cam, const char *chan_name_tf)
-{
-	if( chan_name_tf ) sns_chan_open( &channel_tf, chan_name_tf, NULL );
+		imshow( "rgb image", *image_bgr );
 }
 
 void KinectAR::SendMsg(size_t n)
