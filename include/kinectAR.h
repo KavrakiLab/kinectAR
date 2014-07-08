@@ -64,14 +64,15 @@ class KinectAR
 {
 public:
 	// constructor
-  KinectAR(CamMode mode, char* calibFile, CParams p);
+	//KinectAR(CamMode mode, char* calibFile, CParams p);
+	KinectAR(const char* calibFile, CParams p, const char *chan_cam, const char *chan_tf);
 
 	void UpdateScene(bool draw);
 	void Keyboard(int key, int x, int y);
 
 	void DetectMarkers(bool print);
 	void CreatePointCloud();
-	void OpenChannel(const char* channelName);
+	void OpenChannel(const char* chan_cam, const char *chan_tf);
 	void UpdateMarkerInfo();
 
 	// ACH send message
@@ -94,7 +95,7 @@ public:
 	IplImage* image;
 
 	// for ach
-	ach_channel_t   channel;
+	ach_channel_t   channel_tf;
 
 	cv::Mat rgb;
 	cv::Mat show;
@@ -105,7 +106,7 @@ public:
 	std::vector<KinectMarker> kinectMarkers;
 	ImageReceiver rec;
 	CamMode camMode;
-	char* calib;
+	const char* calib;
 	CParams params;
 
 };

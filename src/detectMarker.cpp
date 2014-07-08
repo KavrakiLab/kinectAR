@@ -81,7 +81,8 @@ CamMode mode;
 bool useKinect   = false;
 bool useGraphics = false;
 
-const char *opt_channel = "markers";
+const char *opt_chan_tf = "markers";
+const char *opt_chan_cam = "video";
 char *param_file        = NULL;
 char *inp_type          = "normal";
 
@@ -121,10 +122,10 @@ osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
 int main(int argc, char **argv)
 {
 	sns_init();
-	for( int c; -1 != (c = getopt(argc, argv, "i:p:gc:?" SNS_OPTSTRING)); ) {
+	for( int c; -1 != (c = getopt(argc, argv, "t:p:gi:o:x?" SNS_OPTSTRING)); ) {
 		switch(c) {
 			SNS_OPTCASES;
-		case 'i':
+		case 't':
 			// analyze args
 			if(optarg[0] == 'a')
 				mode = ACH;
@@ -133,11 +134,17 @@ int main(int argc, char **argv)
 			else
 				mode = NORMAL;
 			break;
-		case 'c':
-			opt_channel = optarg;
+		case 'i':
+			opt_chan_cam = optarg;
+			break;
+		case 'o':
+			opt_chan_tf = optarg;
 			break;
 		case 'p':
 			param_file = optarg;
+			break;
+		case 'x':
+			useGraphics = true;
 			break;
 		case '?':   /* help     */
 		default:
@@ -145,12 +152,14 @@ int main(int argc, char **argv)
 			"Detect markers with kinect\n"
 			"\n"
 			"Options:\n"
-			"  -c CHANNEL,                  Set output Ach channel\n"
-			"  -i INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
+			"  -i CHANNEL,                  Input Ach channel (camera)\n"
+			"  -o CHANNEL,                  Output Ach channel (markers tfs)\n"
+			"  -t INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
 			"  -p file,                     Set the parameter file from which to read additional params\n"
 			"  -?,                          Give program help list\n"
 			"\n"
 			"Report bugs to <hbenamor@cc.gatech.edu>" );
+			break;
 		}
 	}
 	// initialize parameters
@@ -163,10 +172,10 @@ int main(int argc, char **argv)
 	}
 
 	// create a camera processing module
-	KinectAR camera(mode, "calib.xml", p);
+	KinectAR camera("calib.xml", p, opt_chan_cam, opt_chan_tf);
 
 	// channel name
-	camera.OpenChannel(opt_channel);
+	camera.OpenChannel(opt_chan_cam, opt_chan_tf);
 
 	// create a scene graph
 	// use an ArgumentParser object to manage the program arguments.

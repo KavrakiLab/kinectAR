@@ -53,54 +53,23 @@ uint64_t  mask_set_i(uint64_t mask, uint8_t i, int is_visible)
 
 #define ALLOCA_MSG(n) ( (struct sendMarker*)alloca( msg_size(n) ) )
 
-KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
+KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_cam, const char *chan_name_tf)
 {
 	int imageMode;
-	camMode = mode;
+	camMode = ACH;
 	params  = p;
 
-	// using the kinect
-	if(camMode == KINECT)
-	{
-		image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
-		std::cout << "Kinect Device opening ..." << std::endl;
-		capture.open( CV_CAP_OPENNI );
-		std::cout << "done." << std::endl;
-	}
-	else
-	{
-		image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
+	image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
 
-		// using the web cam
-		if (camMode == NORMAL)
-		{
-			capture.open( 0 );
+	rec.init(chan_name_cam, params.getResX(), params.getResY());
 
-			// did not find any camera
-			if( !capture.isOpened() )
-			{
-				std::cout << "Can not open a capture object." << std::endl;
-				exit(0);
-			}
-		}
-		// using ach
-		else if (camMode == ACH)
-		{
-			const char* tmpChannel = params.getAchInputChannel().c_str();
-			rec.init(tmpChannel, params.getResX(), params.getResY());
-		}
-	}
+	sns_chan_open( &channel_tf, chan_name_tf, NULL );
 
 	bool modeRes=false;
 
-	if(camMode == KINECT)
-		modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
 
-	else
-	{
-		capture.set(CV_CAP_PROP_FRAME_WIDTH, params.getResX());
-		capture.set(CV_CAP_PROP_FRAME_HEIGHT, params.getResY());
-	}
+	capture.set(CV_CAP_PROP_FRAME_WIDTH, params.getResX());
+	capture.set(CV_CAP_PROP_FRAME_HEIGHT, params.getResY());
 
 	// create the markers to be tracked
 	for(int i = 0; i < 32; i++)
@@ -125,6 +94,79 @@ KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
 		marker_detector.SetMarkerSizeForId(iter->first, iter->second);
 	}
 }
+
+// KinectAR::KinectAR(CamMode mode, char* calibFileName, CParams p)
+// {
+//	int imageMode;
+//	camMode = mode;
+//	params  = p;
+
+//	// using the kinect
+//	if(camMode == KINECT)
+//	{
+//		image = cvCreateImage(cvSize(1280,1024), IPL_DEPTH_8U, 3);
+//		std::cout << "Kinect Device opening ..." << std::endl;
+//		capture.open( CV_CAP_OPENNI );
+//		std::cout << "done." << std::endl;
+//	}
+//	else
+//	{
+//		image = cvCreateImage(cvSize(params.getResX(), params.getResY()), IPL_DEPTH_8U, 3);
+
+//		// using the web cam
+//		if (camMode == NORMAL)
+//		{
+//			capture.open( 0 );
+
+//			// did not find any camera
+//			if( !capture.isOpened() )
+//			{
+//				std::cout << "Can not open a capture object." << std::endl;
+//				exit(0);
+//			}
+//		}
+//		// using ach
+//		else if (camMode == ACH)
+//		{
+//			const char* tmpChannel = params.getAchInputChannel().c_str();
+//			rec.init(tmpChannel, params.getResX(), params.getResY());
+//		}
+//	}
+
+//	bool modeRes=false;
+
+//	if(camMode == KINECT)
+//		modeRes = capture.set( CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, CV_CAP_OPENNI_SXGA_15HZ );
+
+//	else
+//	{
+//		capture.set(CV_CAP_PROP_FRAME_WIDTH, params.getResX());
+//		capture.set(CV_CAP_PROP_FRAME_HEIGHT, params.getResY());
+//	}
+
+//	// create the markers to be tracked
+//	for(int i = 0; i < 32; i++)
+//	{
+//		// create a bunch of markers
+//		kinectMarkers.push_back(KinectMarker());
+//	}
+
+//	// finished initialization
+//	init = true;
+//	calib = calibFileName;
+
+//	// set marker size
+//	marker_detector.SetMarkerSize(params.getMarkerSize(), 5, 2);
+
+//	// set the size of individual, aka bigger, markers
+//	std::map<int, double> isizes = params.getIndivMarkerSize();
+
+//	for(std::map<int, double>::iterator iter = isizes.begin(); iter != isizes.end(); iter++)
+//	{
+//		// for marker ids larger than 255, set the content resolution accordingly
+//		marker_detector.SetMarkerSizeForId(iter->first, iter->second);
+//	}
+// }
 
 void KinectAR::DetectMarkers(bool print)
 {
@@ -187,10 +229,9 @@ void KinectAR::UpdateScene(bool draw)
 		imshow( "rgb image", bgrImage );
 }
 
-void KinectAR::OpenChannel(const char* channelName)
+void KinectAR::OpenChannel(const char* chan_name_cam, const char *chan_name_tf)
 {
-	sns_chan_open( &channel, channelName, NULL );
-	std::cout << "Channel open" << std::endl;
+	if( chan_name_tf ) sns_chan_open( &channel_tf, chan_name_tf, NULL );
 }
 
 void KinectAR::SendMsg(size_t n)
@@ -266,7 +307,7 @@ void KinectAR::SendMsg(size_t n)
 	}
 
 	// send out the message via ACH
-	enum ach_status r = sns_msg_wt_tf_put( &channel, msg );
+	enum ach_status r = sns_msg_wt_tf_put( &channel_tf, msg );
 	if( ACH_OK != r )
 	{
 		syslog( LOG_ERR, "Could not put data: %s\n", ach_result_to_string(r) );
