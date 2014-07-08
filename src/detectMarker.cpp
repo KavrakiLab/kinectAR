@@ -174,6 +174,12 @@ int main(int argc, char **argv)
 	// create a camera processing module
 	KinectAR camera("calib.xml", p, opt_chan_cam, opt_chan_tf);
 
+	// cancel handlers
+	{
+		ach_channel_t *chans[] = {&camera.rec.chan, NULL};
+		sns_sigcancel( chans, sns_sig_term_default );
+	}
+
 	// create a scene graph
 	// use an ArgumentParser object to manage the program arguments.
 	int numArgs = 6;
@@ -219,9 +225,10 @@ int main(int argc, char **argv)
 		// process video image and draw scene
 		camera.UpdateScene(false);
 
+		if( sns_cx.shutdown ) break;
+
 		// detect the marker in the scene
 		camera.DetectMarkers(true);
-
 
 		// do kinect processing
 		if(mode == KINECT)
@@ -243,6 +250,8 @@ int main(int argc, char **argv)
 		// release memory
 		aa_mem_region_local_release();
 	}
+
+	SNS_LOG(LOG_NOTICE, "Gracefully halting\n");
 
 	return 0;
 }

@@ -213,7 +213,9 @@ void KinectAR::UpdateScene(bool draw)
 	else if (camMode == ACH)
 	{
 		// streaming of pictures
-		image_bgr = rec.receiveImage(image_bgr);
+		cv::Mat *m = rec.receiveImage(image_bgr);
+		if( m ) image_bgr = m;
+		else return;
 	}
 	else
 	{

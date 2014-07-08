@@ -19,8 +19,16 @@ Mat *ImageReceiver::receiveImage(Mat *m)
 	frame_t *frame;
 	ach_status_t r = sns_msg_local_get( &chan, (void**)&frame, &fs,
 					    NULL, (ach_get_opts_t)(ACH_O_LAST | ACH_O_WAIT) );
-
-	assert( ACH_OK == r || ACH_MISSED_FRAME == r);
+	switch( r )  {
+	case ACH_CANCELED:
+		return NULL;
+	case ACH_OK:
+	case ACH_MISSED_FRAME:
+		break;
+	default:
+		SNS_DIE( "Could not receive image frame: %s\n",
+			 ach_result_to_string(r) );
+	}
 
 	if( m ) {
 		SNS_REQUIRE( m->rows == frame->width &&
