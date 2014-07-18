@@ -11,4 +11,4 @@ detect_marker_LDADD = -losg -losgViewer -losgGA -lboost_system -lpthread -lglut 
 bin_PROGRAMS += streampic
 
 streampic_SOURCES = src/streampic.cpp
-streampic_LDADD = -lopencv_core -lopencv_highgui -lsns -lamino -lblas -llapack
+streampic_LDADD = -lsns -lamino -lblas -llapack
