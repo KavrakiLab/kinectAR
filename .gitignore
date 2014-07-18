@@ -22,3 +22,4 @@
 core
 octave-core
 *.yml
+/streampic
