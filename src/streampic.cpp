@@ -71,7 +71,7 @@ void openChannel()
 {
 	// calculate size of frame
 	size = sizeof(frame) + sizeof(frame->points[0])*(width*height*3);
-        frame = (frame_t*) (malloc(size));
+	frame = (frame_t*) (malloc(size));
 
 	// print out the size of the frame
 	std::cout << "Frame size: " << size << std::endl;
@@ -85,25 +85,25 @@ void openChannel()
  */
 void sendImage(Mat image, ach_channel_t* ch)
 {
-        frame->width = image.cols;
-        frame->height = image.rows;
-        int i = 0;
+	frame->width = image.cols;
+	frame->height = image.rows;
+	int i = 0;
 
-        for(int x = 0; x < frame->height; x++)
+	for(int x = 0; x < frame->height; x++)
 	{
 		for(int y = 0; y < frame->width; y++)
-        	{
+		{
 
 			char *rgb = (frame)->points[(i)];
-            		rgb[0] = (char) image.at<cv::Vec3b>(x,y)[0];
-            		rgb[1] = (char) image.at<cv::Vec3b>(x,y)[1];
-            		rgb[2] = (char) image.at<cv::Vec3b>(x,y)[2];
-            		assert(i < frame->width*frame->height);
+			rgb[0] = (char) image.at<cv::Vec3b>(x,y)[0];
+			rgb[1] = (char) image.at<cv::Vec3b>(x,y)[1];
+			rgb[2] = (char) image.at<cv::Vec3b>(x,y)[2];
+			assert(i < frame->width*frame->height);
 			i++;
-        	}
+		}
 	}
 	std::cout << "image size: " << frame->width << " " << frame->height << " " << size << std::endl;
-        ach_status_t r = ach_put( &chan, frame, size );
+	ach_status_t r = ach_put( &chan, frame, size );
 	SNS_REQUIRE( ACH_OK == r, "Could not put frame: %s\n", ach_result_to_string(r) );
 }
 
