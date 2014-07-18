@@ -49,8 +49,8 @@ using namespace std;
 
 ach_channel_t chan;
 
-int width;
-int height;
+int width = 1920;
+int height = 1080;
 char* channelName;
 bool kinect = false;
 int cameraID = 0;
@@ -149,12 +149,12 @@ int main( int argc, char* argv[] )
 				"Detect markers with kinect\n"
 				"\n"
 				"Options:\n"
-				"  -w resx,                  Set the x resolution\n"
-				"  -h resy,                  Set the y resolution\n"
-				"  -n cameraID,                 Set id of camera\n"
-				"  -c CHANNEL,                  Set output Ach channel\n"
-				"  -k kinect,                   Use kinect\n"
-				"  -?,                          Give program help list\n"
+				"  -w resx,                  Set the x resolution (1920)\n"
+				"  -h resy,                  Set the y resolution (1080) \n"
+				"  -n cameraID,              Set id of camera\n"
+				"  -c CHANNEL,               Set output Ach channel\n"
+				"  -k kinect,                Use kinect\n"
+				"  -?,                       Give program help list\n"
 				"\n"
 				"Report bugs to <hbenamor@cc.gatech.edu>" );
 				return 0;
