@@ -102,7 +102,7 @@ void sendImage(Mat image, ach_channel_t* ch)
 			i++;
 		}
 	}
-	std::cout << "image size: " << frame->width << " " << frame->height << " " << size << std::endl;
+	SNS_LOG(LOG_DEBUG, "image_size: %lu %lu %lu\n", frame->width, frame->height, size );
 	ach_status_t r = ach_put( &chan, frame, size );
 	SNS_REQUIRE( ACH_OK == r, "Could not put frame: %s\n", ach_result_to_string(r) );
 }
