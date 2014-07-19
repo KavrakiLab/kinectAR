@@ -20,5 +20,6 @@ class ImageReceiver
 public:
 	ImageReceiver(const char *channelName);
 	Mat *receiveImage(Mat *m);
+	Mat *receiveImage2(Mat *m);
 	ach_channel_t chan;
 };

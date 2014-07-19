@@ -28,7 +28,7 @@ int main( int argc, char* argv[] )
 	sns_start();
 	while(!sns_cx.shutdown)
 	{
-		Mat *m = rec.receiveImage(NULL);
+		Mat *m = rec.receiveImage2(NULL);
 		if(m) {
 			imshow( "receive", *m );
 			delete m;
