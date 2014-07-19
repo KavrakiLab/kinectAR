@@ -194,6 +194,7 @@ int main( int argc, char* argv[] )
 	// open ach channel
 	openChannel();
 
+	sns_start();
 	while(!sns_cx.shutdown)
 	{
 		Mat depthMap;
