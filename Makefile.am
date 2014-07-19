@@ -12,3 +12,7 @@ bin_PROGRAMS += streampic
 
 streampic_SOURCES = src/streampic.cpp
 streampic_LDADD = -lsns -lamino -lblas -llapack
+
+bin_PROGRAMS += imshow
+imshow_SOURCES = src/receive.cpp src/imageReceiver.cpp
+imshow_LDADD = -lsns -lamino -lblas -llapack
