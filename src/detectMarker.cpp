@@ -209,6 +209,8 @@ int main(int argc, char **argv)
 		}
 	}
 
+	sns_start();
+
 	// draw image
 	while(!sns_cx.shutdown)
 	{
