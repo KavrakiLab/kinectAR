@@ -154,16 +154,19 @@ int main(int argc, char **argv)
 		case '?':   /* help     */
 		default:
 			puts( "Usage: detect_marker OPTIONS\n"
-			"Detect markers with kinect\n"
-			"\n"
-			"Options:\n"
-			"  -i CHANNEL,                  Input Ach channel (camera)\n"
-			"  -o CHANNEL,                  Output Ach channel (markers tfs)\n"
-			"  -t INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
-			"  -p file,                     Set the parameter file from which to read additional params\n"
-			"  -c file,                     Set the calibration filen"
-			"  -?,                          Give program help list\n"
-			"\n"
+			      "Detect markers with kinect\n"
+			      "\n"
+			      "Options:\n"
+			      "  -i CHANNEL,              Input Ach channel (camera)\n"
+			      "  -o CHANNEL,              Output Ach channel (markers tfs)\n"
+			      "  -t INPUT_TYPE,           Set type of video input: ACH, NORMAL, KINECT\n"
+			      "  -p file,                 Set the parameter file\n"
+			      "  -c file,                 Set the calibration filen"
+			      "  -?,                      Give program help list\n"
+			      "\n"
+			      "\n"
+			      "Examples:\n"
+			      "  detect_marker -i vid1 -o mark1 -p params.txt -c calib.xml -t ach\n"
 			"Report bugs to <hbenamor@cc.gatech.edu>" );
 			break;
 		}

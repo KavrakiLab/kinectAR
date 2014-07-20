@@ -1,7 +1,6 @@
 TODO LIST
 
 * Directly access webcam rather than using slow OpenCV
-* Track down segfault in detect_marker when backgrounded
 * Expunge all display/X11 code from streampic and detect_markers
   - Make separate program to read TFs from ach and display
 * Put OpenCV->frame_t and frame_t->OpenCV conversions in same file/class

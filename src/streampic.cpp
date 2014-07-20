@@ -146,17 +146,20 @@ int main( int argc, char* argv[] )
 			case '?':
 			default:
 				puts( "Usage: streampic -w resx -h resy -c channel -k\n"
-				"Detect markers with kinect\n"
-				"\n"
-				"Options:\n"
-				"  -w resx,                  Set the x resolution (1920)\n"
-				"  -h resy,                  Set the y resolution (1080) \n"
-				"  -n cameraID,              Set id of camera\n"
-				"  -c CHANNEL,               Set output Ach channel\n"
-				"  -k kinect,                Use kinect\n"
-				"  -?,                       Give program help list\n"
-				"\n"
-				"Report bugs to <hbenamor@cc.gatech.edu>" );
+				      "Detect markers with kinect\n"
+				      "\n"
+				      "Options:\n"
+				      "  -w resx,                  Set the x resolution (1920)\n"
+				      "  -h resy,                  Set the y resolution (1080) \n"
+				      "  -n cameraID,              Set id of camera\n"
+				      "  -c CHANNEL,               Set output Ach channel\n"
+				      "  -k kinect,                Use kinect\n"
+				      "  -?,                       Give program help list\n"
+				      "\n"
+				      "Examples:\n"
+				      "streampic -c video1 -w 1920 -h 1080 -n 2\n"
+				      ""
+				      "Report bugs to <hbenamor@cc.gatech.edu>" );
 				return 0;
 		}
 	}
