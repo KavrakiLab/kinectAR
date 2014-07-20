@@ -261,7 +261,7 @@ void KinectAR::SendMsg(size_t n)
 	{
 		int id = (*(marker_detector.markers))[i].GetId();
 		if( id >= n ) {
-			SNS_LOG( LOG_ERR, "Invalid id: %d\n", id );
+			SNS_LOG( LOG_DEBUG, "Invalid id: %d\n", id );
 			continue;
 		}
 
