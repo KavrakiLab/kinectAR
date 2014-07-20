@@ -83,7 +83,7 @@ void openChannel()
 /*
  * Sends an image over ach
  */
-void sendImage(Mat image, ach_channel_t* ch)
+void sendImage(const Mat &image, ach_channel_t* ch)
 {
 	frame->width = image.cols;
 	frame->height = image.rows;
@@ -217,12 +217,7 @@ int main( int argc, char* argv[] )
 		{
 			capture >> bgrImage;
 		}
-
-		// send image over ach
 		sendImage(bgrImage, &chan);
-
-		if( waitKey( 30 ) >= 0 )
-		break;
 	}
 
 	aa_mem_region_local_release();
