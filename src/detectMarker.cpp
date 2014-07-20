@@ -86,6 +86,8 @@ const char *opt_chan_cam = "video";
 char *param_file        = NULL;
 char *inp_type          = "normal";
 
+const char *opt_calib = NULL;
+
 /**
  * Creates a scene graph for 3D visualization
  */
@@ -122,7 +124,7 @@ osg::Group* createSceneGraph(osgViewer::Viewer* viewer)
 int main(int argc, char **argv)
 {
 	sns_init();
-	for( int c; -1 != (c = getopt(argc, argv, "t:p:gi:o:x?" SNS_OPTSTRING)); ) {
+	for( int c; -1 != (c = getopt(argc, argv, "t:p:gi:o:xc:?" SNS_OPTSTRING)); ) {
 		switch(c) {
 			SNS_OPTCASES;
 		case 't':
@@ -137,6 +139,9 @@ int main(int argc, char **argv)
 		case 'i':
 			opt_chan_cam = optarg;
 			break;
+		case 'c':
+			opt_calib = optarg;
+			break;
 		case 'o':
 			opt_chan_tf = optarg;
 			break;
@@ -148,7 +153,7 @@ int main(int argc, char **argv)
 			break;
 		case '?':   /* help     */
 		default:
-			puts( "Usage: detect_marker -c channel -i (normal/kinect/ach)\n"
+			puts( "Usage: detect_marker OPTIONS\n"
 			"Detect markers with kinect\n"
 			"\n"
 			"Options:\n"
@@ -156,6 +161,7 @@ int main(int argc, char **argv)
 			"  -o CHANNEL,                  Output Ach channel (markers tfs)\n"
 			"  -t INPUT_TYPE,               Set type of video input: ACH, NORMAL, KINECT\n"
 			"  -p file,                     Set the parameter file from which to read additional params\n"
+			"  -c file,                     Set the calibration filen"
 			"  -?,                          Give program help list\n"
 			"\n"
 			"Report bugs to <hbenamor@cc.gatech.edu>" );
@@ -171,8 +177,10 @@ int main(int argc, char **argv)
 		p = CParams(param_file);
 	}
 
+	SNS_REQUIRE( opt_calib, "Must specify calibration file\n");
+
 	// create a camera processing module
-	KinectAR camera("calib.xml", p, opt_chan_cam, opt_chan_tf);
+	KinectAR camera(opt_calib, p, opt_chan_cam, opt_chan_tf);
 
 	// cancel handlers
 	{
