@@ -243,10 +243,6 @@ int main(int argc, char **argv)
 		if(useGraphics)
 			viewer->frame();
 
-		// process keyboard input
-		if( waitKey( 30 ) >= 0 )
-			exit(0);
-
 		// release memory
 		aa_mem_region_local_release();
 	}
