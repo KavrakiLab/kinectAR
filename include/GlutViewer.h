@@ -3,7 +3,7 @@
 #define _GLUTVIEWER_H_
 
 #include <cxcore.h>
-#include <MarkerDetector.h>
+#include <alvar/MarkerDetector.h>
 
 #ifdef WIN32
     #include <windows.h>

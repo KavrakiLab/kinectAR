@@ -41,7 +41,7 @@
 #include <osg/ShapeDrawable>
 #include <osg/PositionAttitudeTransform>
 
-#include <MarkerDetector.h>
+#include <alvar/MarkerDetector.h>
 #include <GlutViewer.h>
 
 class KinectMarker

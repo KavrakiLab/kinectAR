@@ -33,7 +33,7 @@
 #include <pcl/point_types.h>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/project_inliers.h>
-#include <MarkerDetector.h>
+#include <alvar/MarkerDetector.h>
 #include <GlutViewer.h>
 
 #include "cparams.h"
