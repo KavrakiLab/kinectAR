@@ -84,7 +84,8 @@ void KinectMarker::Update(alvar::MarkerData* newData)
 
 	markerCornersImg      = newData->marker_corners_img;
 	markerCornersCentered = newData->marker_corners;
-	markerPointsImg       = newData->ros_marker_points_img;
+	//markerPointsImg       = newData->ros_marker_points_img;
+	markerPointsImg       = newData->marker_points;
 
 	// blow up maker points in image
 	if(visible)
