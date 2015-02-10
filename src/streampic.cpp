@@ -77,7 +77,10 @@ void openChannel()
 	std::cout << "Frame size: " << size << std::endl;
 
 	// open ach
-	sns_chan_open( &chan, channelName, NULL );
+	ach_attr_t attr;
+	ach_attr_init(&attr);
+	ach_attr_set_lock_source(&attr, 1);
+	sns_chan_open( &chan, channelName, &attr );
 }
 
 /*

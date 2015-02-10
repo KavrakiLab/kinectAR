@@ -62,6 +62,9 @@ KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_c
 	camMode = ACH;
 	params  = p;
 
+	ach_attr_t attr;
+	ach_attr_init(&attr);
+	ach_attr_set_lock_source(&attr, 1);
 	sns_chan_open( &channel_tf, chan_name_tf, NULL );
 
 	bool modeRes=false;
