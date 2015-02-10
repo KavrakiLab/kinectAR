@@ -16,3 +16,7 @@ streampic_LDADD = -lsns -lamino -lblas -llapack -lach
 bin_PROGRAMS += imshow
 imshow_SOURCES = src/receive.cpp src/imageReceiver.cpp
 imshow_LDADD = -lsns -lamino -lblas -llapack -lach
+
+bin_PROGRAMS += calibrateCamera
+calibrateCamera_SOURCES = src/calibrateCamera.cpp src/imageReceiver.cpp
+calibrateCamera_LDADD = -lsns -lamino -lblas -llapack -lach
