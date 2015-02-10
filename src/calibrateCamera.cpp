@@ -276,15 +276,15 @@ int main(int argc, char* argv[]) {
 	sns_start();
 
 	bool save = false;
-
 	bool found = false;
 	Mat *m = NULL;
 	const Scalar RED(0, 0, 255);
+	const Scalar GREEN(0, 255, 0);
+
+	string msg = "";
 
 	vector<Point2f> pointBuf;
 	vector<vector<Point2f> > imagePoints;
-	string help = "Controls -\ns - Saves current frame\nd - Throws away current frame\nc - Attempts to calibrate on current frame";
-
 	while(!sns_cx.shutdown) {
 		bool blinkOutput = false;
 
@@ -300,11 +300,11 @@ int main(int argc, char* argv[]) {
 		}
 		case (2): {
 			if (!save) {
-				cout << "No image saved!" << endl;
+				msg = "No image saved!";
 				break;
 			}
 			if (!found) {
-				cout << "No board found!" << endl;
+				msg = "No board found!";
 				break;
 			}
 
@@ -319,6 +319,7 @@ int main(int argc, char* argv[]) {
 			save = false;
 			found = false;
 			sig.sendSignal(0);
+			msg = "Frame destroyed.";
 			break;
 		}
 		}
@@ -330,8 +331,12 @@ int main(int argc, char* argv[]) {
 			m = rec.receiveImage2(NULL);
 		} else {
 			if (!found) {
-				cout << "attempting find..." << endl;
+				msg = "Attempting to find board...";
 				found = calibrate(m, &s, &pointBuf);
+
+				if (found) {
+					msg = "Found board!";
+				}
 			}
 		}
 
@@ -345,12 +350,21 @@ int main(int argc, char* argv[]) {
 
 
 			int baseline = 0;
-			string msg = format("%d Images Captured", (int) imagePoints.size());
+			string imageCountMsg = format("%d Images Captured", (int) imagePoints.size());
 
-			Size textSize = getTextSize(msg, 1, 1, 1, &baseline);
-			Point textOrigin(copyM.cols - 2 * textSize.width - 10, copyM.rows - 2 * baseline - 10);
-			putText(copyM, msg, textOrigin, 1, 1, RED);
-			putText(copyM, help, Point(1, 1), 1, 1, RED);
+			Size textSize = getTextSize(imageCountMsg, 1, 1, 1, &baseline);
+			Point bottomLeft(10, copyM.rows - 2 * baseline - 10);
+			Point bottomRight(copyM.cols - 2 * textSize.width - 10, copyM.rows - 2 * baseline - 10);
+
+			Scalar textColor = (found) ? GREEN : RED;
+			putText(copyM, imageCountMsg, bottomRight, 1, 1, textColor);
+			putText(copyM, msg, bottomLeft, 1, 1, textColor);
+
+			putText(copyM, "Controls -", Point(10, 15), 1, 1, textColor);
+			putText(copyM, "s - Saves current frame for processing", Point(10, 30), 1, 1, textColor);
+			putText(copyM, "d - Deletes saved frame", Point(10, 45), 1, 1, textColor);
+			putText(copyM, "c - Uses current saved frame for calibration", Point(10, 60), 1, 1, textColor);
+			putText(copyM, "Text turns green if valid frame found.", Point(10, 75), 1, 1, textColor);
 
 			imshow( "Calibration", copyM );
 		}
@@ -369,6 +383,10 @@ int main(int argc, char* argv[]) {
 			case ('d'): {
 				sig.sendSignal(3);
 				break;
+			}
+			case (27): {
+				aa_mem_region_local_release();
+				exit(0);
 			}
 			}
 		}
