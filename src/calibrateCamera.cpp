@@ -201,7 +201,7 @@ public:
 	}
 };
 
-int calibrate(Mat *m, Settings *s, vector<Point2f> *v) {
+int findRegion(Mat *m, Settings *s, vector<Point2f> *v) {
 	Size imageSize = m->size();
 
 	if (s->flipVertical) {
@@ -241,8 +241,18 @@ int calibrate(Mat *m, Settings *s, vector<Point2f> *v) {
 	} else {
 		return 0;
 	}
-
 }
+
+bool runCalibrationAndSave(Settings& s, Size imageSize, Mat&  cameraMatrix, Mat& distCoeffs,
+	vector<vector<Point2f> > imagePoints );
+
+static bool calibrate(Settings& s, Size imageSize, vector<vector<Point2f> > imagePoints ) {
+	Mat cameraMatrix, distCoeffs;
+
+	return runCalibrationAndSave(s, imageSize,  cameraMatrix, distCoeffs, imagePoints);
+}
+
+
 
 int main(int argc, char* argv[]) {
 	ach_channel_t signalChan;
@@ -254,7 +264,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	ImageReceiver rec(argv[1]);
-
 	Signal sig(argv[2]);
 
 	Settings s;
@@ -277,7 +286,10 @@ int main(int argc, char* argv[]) {
 
 	bool save = false;
 	bool found = false;
+
 	Mat *m = NULL;
+	Size imageSize;
+
 	const Scalar RED(0, 0, 255);
 	const Scalar GREEN(0, 255, 0);
 
@@ -285,6 +297,7 @@ int main(int argc, char* argv[]) {
 
 	vector<Point2f> pointBuf;
 	vector<vector<Point2f> > imagePoints;
+
 	while(!sns_cx.shutdown) {
 		bool blinkOutput = false;
 
@@ -311,7 +324,6 @@ int main(int argc, char* argv[]) {
 			// Save this one
 			imagePoints.push_back(pointBuf);
 			blinkOutput = true;
-			sig.sendSignal(3);
 
 			break;
 		}
@@ -322,6 +334,18 @@ int main(int argc, char* argv[]) {
 			msg = "Frame destroyed.";
 			break;
 		}
+		case (4): {
+			if (imagePoints.size() > 0) {
+				if (calibrate(s, imageSize, imagePoints)) {
+					msg = "Generation Success!";
+				} else {
+					msg = "Generation Failure!";
+				}
+			} else {
+				msg = "No images saved!";
+			}
+			break;
+		}
 		}
 
 		if (!save) {
@@ -329,10 +353,11 @@ int main(int argc, char* argv[]) {
 				delete m;
 			}
 			m = rec.receiveImage2(NULL);
+			imageSize = m->size();
 		} else {
 			if (!found) {
 				msg = "Attempting to find board...";
-				found = calibrate(m, &s, &pointBuf);
+				found = findRegion(m, &s, &pointBuf);
 
 				if (found) {
 					msg = "Found board!";
@@ -348,7 +373,6 @@ int main(int argc, char* argv[]) {
 				bitwise_not(copyM, copyM);
 			}
 
-
 			int baseline = 0;
 			string imageCountMsg = format("%d Images Captured", (int) imagePoints.size());
 
@@ -363,8 +387,9 @@ int main(int argc, char* argv[]) {
 			putText(copyM, "Controls -", Point(10, 15), 1, 1, textColor);
 			putText(copyM, "s - Saves current frame for processing", Point(10, 30), 1, 1, textColor);
 			putText(copyM, "d - Deletes saved frame", Point(10, 45), 1, 1, textColor);
-			putText(copyM, "c - Uses current saved frame for calibration", Point(10, 60), 1, 1, textColor);
-			putText(copyM, "Text turns green if valid frame found.", Point(10, 75), 1, 1, textColor);
+			putText(copyM, "u - Uses current saved frame for calibration", Point(10, 60), 1, 1, textColor);
+			putText(copyM, "g - Generates camera calibration file", Point(10, 75), 1, 1, textColor);
+			putText(copyM, "Text turns green if valid frame found.", Point(10, 90), 1, 1, textColor);
 
 			imshow( "Calibration", copyM );
 		}
@@ -376,12 +401,16 @@ int main(int argc, char* argv[]) {
 				sig.sendSignal(1);
 				break;
 			}
-			case ('c'): {
+			case ('u'): {
 				sig.sendSignal(2);
 				break;
 			}
 			case ('d'): {
 				sig.sendSignal(3);
+				break;
+			}
+			case ('g'): {
+				sig.sendSignal(4);
 				break;
 			}
 			case (27): {
