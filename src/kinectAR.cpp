@@ -167,6 +167,10 @@ KinectAR::KinectAR(const char* calibFileName, CParams p, const char *chan_name_c
 //	}
 // }
 
+void SetCalibrationFile(const char* calibFile) {
+	calib = calibFileName;
+}
+
 void KinectAR::DetectMarkers(bool print)
 {
 	if (init)
