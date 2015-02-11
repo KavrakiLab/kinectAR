@@ -73,7 +73,7 @@ public:
 	void DetectMarkers(bool print);
 	void CreatePointCloud();
 	void UpdateMarkerInfo();
-
+	void SetCalibrationFile(const char *calibFile);
 	// ACH send message
 	void SendMsg(size_t n);
 
