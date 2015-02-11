@@ -271,7 +271,7 @@ int main(int argc, char* argv[]) {
 	FileStorage fs(inputSettingsFile, FileStorage::READ); // Read the settings
 
 	if (!fs.isOpened()) {
-		cout << "Could not open the configuration file: \"" << inputSettingsFile << "\"" << endl;
+		cout << "Could not open configuration file: \"" << inputSettingsFile << "\"" << endl;
 		return -1;
 	}
 	fs["Settings"] >> s;
@@ -496,7 +496,7 @@ static bool runCalibration( Settings& s, Size& imageSize, Mat& cameraMatrix, Mat
     double rms = calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix,
                                  distCoeffs, rvecs, tvecs, s.flag|CV_CALIB_FIX_K4|CV_CALIB_FIX_K5);
 
-    cout << "Re-projection error reported by calibrateCamera: "<< rms << endl;
+    // cout << "Re-projection error reported by calibrateCamera: "<< rms << endl;
 
     bool ok = checkRange(cameraMatrix) && checkRange(distCoeffs);
 
@@ -593,8 +593,8 @@ bool runCalibrationAndSave(Settings& s, Size imageSize, Mat&  cameraMatrix, Mat&
 
     bool ok = runCalibration(s,imageSize, cameraMatrix, distCoeffs, imagePoints, rvecs, tvecs,
                              reprojErrs, totalAvgErr);
-    cout << (ok ? "Calibration succeeded" : "Calibration failed")
-        << ". avg re projection error = "  << totalAvgErr ;
+    // cout << (ok ? "Calibration succeeded" : "Calibration failed")
+    //     << ". avg re projection error = "  << totalAvgErr ;
 
     if( ok )
         saveCameraParams( s, imageSize, cameraMatrix, distCoeffs, rvecs ,tvecs, reprojErrs,
