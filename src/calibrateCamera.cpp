@@ -173,9 +173,8 @@ public:
 		SNS_REQUIRE( ACH_OK == r, "Could not signal! %s\n", ach_result_to_string(r) );
 	}
 
-	int recvSignal(void) {
+	int recvSignal(int *sig) {
 		size_t signalSize;
-		int *sig;
 		ach_status_t r = sns_msg_local_get(
 			&chan,
 			(void**) &sig,
@@ -246,46 +245,10 @@ int findRegion(Mat *m, Settings *s, vector<Point2f> *v) {
 bool runCalibrationAndSave(Settings& s, Size imageSize, Mat&  cameraMatrix, Mat& distCoeffs,
 	vector<vector<Point2f> > imagePoints );
 
-static bool calibrate(Settings& s, Size imageSize, vector<vector<Point2f> > imagePoints ) {
-	Mat cameraMatrix, distCoeffs;
-
-	return runCalibrationAndSave(s, imageSize,  cameraMatrix, distCoeffs, imagePoints);
-}
-
-
-
-int main(int argc, char* argv[]) {
-	ach_channel_t signalChan;
-
-	sns_init();
-	if(argc < 3) {
-		std::cout << "Usage: calibrateCamera camera_channel signal_channel calibration_file" << std::endl;
-		return 0;
-	}
-
-	ImageReceiver rec(argv[1]);
-	Signal sig(argv[2]);
-
-	Settings s;
-	const string inputSettingsFile = argv[3];
-	FileStorage fs(inputSettingsFile, FileStorage::READ); // Read the settings
-
-	if (!fs.isOpened()) {
-		cout << "Could not open configuration file: \"" << inputSettingsFile << "\"" << endl;
-		return -1;
-	}
-	fs["Settings"] >> s;
-	fs.release();
-
-	{
-		ach_channel_t *chans[] = {&rec.chan, &signalChan, NULL};
-		sns_sigcancel( chans, sns_sig_term_default );
-	}
-
-	sns_start();
-
+static void loop(Settings& s, ImageReceiver& rec, Signal &sig) {
 	bool save = false;
 	bool found = false;
+	bool calib = false;
 
 	Mat *m = NULL;
 	Size imageSize;
@@ -298,10 +261,14 @@ int main(int argc, char* argv[]) {
 	vector<Point2f> pointBuf;
 	vector<vector<Point2f> > imagePoints;
 
+	Mat cameraMatrix;
+	Mat distCoeffs;
+
 	while(!sns_cx.shutdown) {
 		bool blinkOutput = false;
 
-		int sg = sig.recvSignal();
+		int sg = 0;
+		sg = sig.recvSignal(&sg);
 		switch (sg) {
 		case (0): {
 			break;
@@ -336,8 +303,9 @@ int main(int argc, char* argv[]) {
 		}
 		case (4): {
 			if (imagePoints.size() > 0) {
-				if (calibrate(s, imageSize, imagePoints)) {
+				if (runCalibrationAndSave(s, imageSize,  cameraMatrix, distCoeffs, imagePoints)) {
 					msg = "Generation Success!";
+					calib = true;
 				} else {
 					msg = "Generation Failure!";
 				}
@@ -371,6 +339,11 @@ int main(int argc, char* argv[]) {
 
 			if(blinkOutput) {
 				bitwise_not(copyM, copyM);
+			}
+
+			if(calib && s.showUndistorsed) {
+				Mat temp = copyM.clone();
+				undistort(temp, copyM, cameraMatrix, distCoeffs);
 			}
 
 			int baseline = 0;
@@ -422,6 +395,40 @@ int main(int argc, char* argv[]) {
 
 		aa_mem_region_local_release();
 	}
+}
+
+int main(int argc, char* argv[]) {
+	ach_channel_t signalChan;
+
+	sns_init();
+	if(argc < 3) {
+		std::cout << "Usage: calibrateCamera camera_channel signal_channel calibration_file" << std::endl;
+		return 0;
+	}
+
+	ImageReceiver rec(argv[1]);
+	Signal sig(argv[2]);
+
+	Settings s;
+	const string inputSettingsFile = argv[3];
+	FileStorage fs(inputSettingsFile, FileStorage::READ); // Read the settings
+
+	if (!fs.isOpened()) {
+		cout << "Could not open configuration file: \"" << inputSettingsFile << "\"" << endl;
+		return -1;
+	}
+	fs["Settings"] >> s;
+	fs.release();
+
+	{
+		ach_channel_t *chans[] = {&rec.chan, &signalChan, NULL};
+		sns_sigcancel( chans, sns_sig_term_default );
+	}
+
+	sns_start();
+
+	loop(s, rec, sig);
+
 	return 0;
 }
 
