@@ -20,3 +20,7 @@ imshow_LDADD = -lsns -lamino -lblas -llapack -lach
 bin_PROGRAMS += calibrateCamera
 calibrateCamera_SOURCES = src/calibrateCamera.cpp src/imageReceiver.cpp
 calibrateCamera_LDADD = -lsns -lamino -lblas -llapack -lach
+
+bin_PROGRAMS += intMessager
+intMessager_SOURCES = src/intMessager.cpp
+intMessager_LDADD = -lsns -lamino -lach
